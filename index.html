@@ -1,0 +1,1683 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Geometri Keşif Atölyesi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Layout: kareli defter — girişte sınıf seçici + büyük kare konu kartları; konu ekranında solda çizim kâğıdı, sağda ölçüm, büyük fikir ve görev kartları */
+:root{
+  --paper:#eef3fa; --sheet:#ffffff; --grid:#dce7f4; --grid2:#b7cbe6;
+  --ink:#1c3360; --ink-soft:#5b6f94; --line:#cfdbec;
+  --hl:#ffd23f; --hl2:#ff93b3; --hl3:#6fd6ad; --hl4:#8cc6ff;
+  --pen:#d9433a; --ok:#1d9a66; --okbg:#e2f5eb; --shade:#0a1630;
+  --display:'Baloo 2','Trebuchet MS',system-ui,sans-serif;
+  --body:'Nunito','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10182a; --sheet:#172238; --grid:#222f4a; --grid2:#33486c;
+    --ink:#e8effc; --ink-soft:#9fb1d3; --line:#2b3a59;
+    --hl:#e6bd2e; --hl2:#e77a9d; --hl3:#4fbf93; --hl4:#5aa5e8;
+    --pen:#ff6a5c; --ok:#4fd39a; --okbg:#163829; --shade:#000; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10182a; --sheet:#172238; --grid:#222f4a; --grid2:#33486c;
+  --ink:#e8effc; --ink-soft:#9fb1d3; --line:#2b3a59;
+  --hl:#e6bd2e; --hl2:#e77a9d; --hl3:#4fbf93; --hl4:#5aa5e8;
+  --pen:#ff6a5c; --ok:#4fd39a; --okbg:#163829; --shade:#000; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;line-height:1.5;--s:1}
+body.board{--s:1.35}
+.app{max-width:1280px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--pen);outline-offset:2px}
+
+/* üst bar */
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;gap:14px;align-items:center;min-width:0;background:none;border:none;color:inherit;text-align:left;cursor:pointer;padding:0}
+.mark{flex:none;width:54px;height:54px;border-radius:15px;background:var(--ink);display:grid;place-items:center}
+.mark svg{width:34px;height:34px}
+.brand h1{font-family:var(--display);font-weight:800;font-size:clamp(23px,3.4vw,34px);line-height:1.02;margin:0;text-wrap:balance}
+.brand p{margin:3px 0 0;color:var(--ink-soft);font-weight:600}
+.switch{display:inline-flex;align-items:center;gap:10px;font-weight:800;cursor:pointer;background:var(--sheet);border:1px solid var(--line);padding:8px 14px;border-radius:999px;user-select:none}
+.switch input{appearance:none;width:38px;height:22px;border-radius:999px;background:var(--grid2);position:relative;cursor:pointer;margin:0;transition:background .2s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--sheet);transition:transform .2s}
+.switch input:checked{background:var(--ink)}
+.switch input:checked::after{transform:translateX(16px)}
+
+/* giriş */
+.hero{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:end;justify-content:space-between}
+.hero h2{font-family:var(--display);font-weight:800;font-size:clamp(20px,2.6vw,27px);line-height:1.15;margin:0;max-width:30ch;text-wrap:balance}
+.hero p{margin:6px 0 0;color:var(--ink-soft);font-weight:600;max-width:60ch}
+.grades{display:flex;gap:8px;flex-wrap:wrap}
+.grade{font-family:var(--display);font-weight:800;font-size:19px;color:var(--ink);background:var(--sheet);border:2px solid var(--line);border-radius:16px;padding:8px 18px;cursor:pointer;display:flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums}
+.grade b{font-size:28px;line-height:1}
+.grade[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:18px}
+.tcard{position:relative;aspect-ratio:1/1;max-width:100%;display:flex;flex-direction:column;gap:6px;padding:18px 20px;border-radius:24px;background:var(--sheet);border:1px solid var(--line);color:var(--ink);text-align:left;cursor:pointer;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s}
+.tcard::before{content:"";position:absolute;width:78%;aspect-ratio:1;border-radius:50%;background:var(--c);opacity:.28;right:-18%;top:-20%}
+.tcard:hover{transform:translateY(-4px);box-shadow:0 14px 28px -18px rgba(20,40,90,.55);border-color:var(--ink-soft)}
+.tcard .off{position:relative;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;color:var(--ink-soft)}
+.tcard .ic{position:relative;flex:1;min-height:0;display:grid;place-items:center}
+.tcard .ic svg{width:min(58%,150px);height:auto;max-height:100%}
+.tcard h3{position:relative;font-family:var(--display);font-weight:800;font-size:calc(23px*var(--s));line-height:1.08;margin:0;text-wrap:balance}
+.tcard .meta{position:relative;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.tcard .mini{flex:1;height:6px;border-radius:9px;background:var(--paper);overflow:hidden}
+.tcard .mini i{display:block;height:100%;background:var(--ok)}
+.is{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.if{fill:var(--c);stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+.if2{fill:var(--sheet);stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+.idot{fill:var(--ink)}
+.ipen{fill:var(--pen)}
+
+/* konu ekranı */
+.thead{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.back{font:800 15px var(--body);color:var(--ink);background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:9px 14px;cursor:pointer}
+.back:hover{border-color:var(--ink-soft)}
+.thead .eyebrow{margin:0}
+.thead h2{font-family:var(--display);font-weight:800;font-size:clamp(24px,3.2vw,34px);line-height:1.05;margin:0;text-wrap:balance}
+.labs{display:flex;gap:8px;flex-wrap:wrap}
+.lab{font-family:var(--display);font-weight:700;font-size:calc(16px*var(--s));color:var(--ink);background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:7px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.lab:hover{border-color:var(--ink-soft)}
+.lab[aria-selected="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.lab .why{font:900 10px var(--body);letter-spacing:.08em;background:var(--hl);color:#1c3360;border-radius:999px;padding:2px 7px}
+
+.panel{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:18px;align-items:start}
+.board .panel{grid-template-columns:minmax(0,2.3fr) minmax(0,1fr)}
+@media (max-width:880px){.panel,.board .panel{grid-template-columns:1fr}}
+.stage{background:var(--sheet);border:1px solid var(--line);border-radius:18px;overflow:hidden;min-width:0}
+.stage-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);min-height:54px}
+.hint{color:var(--ink-soft);font-weight:700;font-size:14px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:800 14px var(--body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--ink-soft)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.btn.primary{background:var(--pen);color:#fff;border-color:var(--pen)}
+.btn svg{width:12px;height:12px}
+.segm{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;flex-wrap:wrap}
+.segm button{font:800 13px var(--body);border:none;background:none;color:var(--ink-soft);padding:5px 10px;border-radius:8px;cursor:pointer}
+.segm button[aria-pressed="true"]{background:var(--sheet);color:var(--ink);box-shadow:0 1px 3px rgba(10,20,50,.18)}
+.chk{display:inline-flex;gap:7px;align-items:center;font-weight:800;font-size:14px;cursor:pointer}
+.chk input{accent-color:var(--ink);width:17px;height:17px;margin:0}
+#svgWrap svg{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+#below:empty{display:none}
+#below{border-top:1px solid var(--line);padding:8px 14px;display:flex;flex-direction:column;gap:4px}
+.srow{display:grid;grid-template-columns:minmax(90px,auto) minmax(0,1fr) 58px auto;gap:12px;align-items:center}
+.srow label{font-weight:800;font-size:14px}
+.srow input{width:100%;min-width:0;accent-color:var(--pen)}
+.srow output{font-weight:900;font-variant-numeric:tabular-nums;text-align:right;font-size:14px}
+@media (max-width:520px){.srow{grid-template-columns:1fr 54px auto}.srow label{grid-column:1/-1;margin-bottom:-8px}}
+.ed{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:4px 0}
+.ed-grid{display:grid;grid-template-columns:repeat(4,44px);gap:4px}
+.ed-grid button{width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--paper);font:900 18px var(--display);color:var(--ink);cursor:pointer}
+.ed-grid button.on{background:var(--hl);color:#1c3360;border-color:var(--ink)}
+.ed small{color:var(--ink-soft);font-weight:700;max-width:34ch}
+.qin{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qin input{width:90px;font:800 16px var(--body);padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);font-weight:900;margin:0 0 4px}
+.big{font-family:var(--display);font-weight:800;font-size:calc(32px*var(--s));line-height:1.12;font-variant-numeric:tabular-nums;margin:0;overflow-wrap:anywhere}
+.pill{display:inline-block;padding:3px 12px;border-radius:999px;background:var(--ink);color:var(--sheet);font-weight:900;font-size:calc(14px*var(--s));margin-top:6px}
+.pill.warn{background:var(--pen);color:#fff}
+.pill.good{background:var(--ok);color:var(--sheet)}
+.desc{margin:8px 0 0;color:var(--ink-soft);font-weight:600}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stats.three{grid-template-columns:1fr 1fr 1fr}
+.stat{background:var(--paper);border-radius:12px;padding:9px 11px;min-width:0}
+.stat b{display:block;font-family:var(--display);font-size:calc(22px*var(--s));line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat span{font-size:12.5px;color:var(--ink-soft);font-weight:700}
+.rows{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rows li{display:flex;align-items:center;gap:10px;font-weight:700;font-variant-numeric:tabular-nums;font-size:calc(15px*var(--s))}
+.rows li b{margin-left:auto;font-family:var(--display);font-size:calc(19px*var(--s))}
+.rows li.no{color:var(--ink-soft)}
+.sw{width:14px;height:14px;border-radius:4px;flex:none;border:1.5px solid var(--ink)}
+.sw.cA{background:var(--hl)}.sw.cB{background:var(--hl2)}.sw.cC{background:var(--hl3)}.sw.cD{background:var(--hl4)}
+.eqn{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--paper);font-family:var(--display);font-weight:800;font-size:calc(19px*var(--s));text-align:center;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.eqn small{display:block;font-family:var(--body);font-size:13px;color:var(--ink-soft);font-weight:700}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{background:var(--paper);border-radius:10px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--ink-soft)}
+.tag b{color:var(--ink);font-size:calc(15px*var(--s))}
+.checks{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.checks li{display:flex;gap:9px;align-items:flex-start;font-weight:700;font-size:calc(14px*var(--s))}
+.checks li::before{content:"";flex:none;width:16px;height:16px;margin-top:3px;border-radius:5px;border:2px solid var(--grid2)}
+.checks li.y::before{background:var(--ok);border-color:var(--ok)}
+.checks li.n{color:var(--ink-soft)}
+.rel{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rel li{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--paper);font-weight:700;font-size:calc(14px*var(--s))}
+.rel li b{font-family:var(--display);font-size:calc(17px*var(--s))}
+.rel li em{font-style:normal;font-size:12px;font-weight:900;padding:2px 8px;border-radius:999px;white-space:nowrap;color:#1c3360}
+.rel li.eq em{background:var(--hl)}
+.rel li.sup em{background:var(--hl2)}
+table.tb{width:100%;border-collapse:collapse;margin-top:10px;font-variant-numeric:tabular-nums;font-weight:700}
+table.tb th,table.tb td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.tb th{font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em}
+.tbwrap{overflow-x:auto}
+
+.note{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.note h3,.tasks h3{font-family:var(--display);font-weight:800;font-size:19px;margin:0}
+.note p{margin:6px 0 0;font-weight:600}
+.tasks .head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.count{font-weight:900;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.prog{height:8px;background:var(--paper);border-radius:9px;overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--ok);border-radius:9px;transition:width .4s}
+.tasks ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+.tk{width:100%;display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:10px;background:var(--paper);font:700 14.5px var(--body);color:var(--ink);text-align:left;border:1px solid transparent;cursor:pointer}
+.tk:hover{border-color:var(--line)}
+.tk small{display:block;font-weight:600;color:var(--ink-soft);font-size:12.5px}
+.box{width:20px;height:20px;border:2px solid var(--ink-soft);border-radius:6px;margin-top:1px;display:grid;place-items:center}
+.tk.done{background:var(--okbg)}
+.tk.done .box{background:var(--ok);border-color:var(--ok)}
+.tk.done .box::after{content:"✓";color:var(--sheet);font-weight:900;font-size:13px;line-height:1}
+.tk.just{animation:pop .7s ease}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.04)}100%{transform:scale(1)}}
+.linkbtn{background:none;border:none;color:var(--ink-soft);font:700 13px var(--body);text-decoration:underline;cursor:pointer;padding:0;margin-top:10px}
+.board .tasks,.board .note{display:none}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ok);color:var(--sheet);font-weight:900;padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;max-width:calc(100% - 32px);text-align:center;z-index:5}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.foot{color:var(--ink-soft);font-size:13px;font-weight:600;text-align:center;margin-top:8px}
+
+/* çizim kâğıdı */
+.gl{fill:none;stroke:var(--grid);stroke-width:1}
+.ray{stroke:var(--ink);stroke-width:3.5;stroke-linecap:round;fill:none}
+.ray.thin{stroke-width:2.4}
+.ray.pen{stroke:var(--pen)}
+.dash{stroke:var(--ink-soft);stroke-width:2;stroke-dasharray:6 6;fill:none}
+.ghost{fill:none;stroke:var(--ink-soft);stroke-width:2.5;stroke-dasharray:8 6}
+.tick{stroke:var(--grid2);stroke-width:1.5}
+.tick.big{stroke:var(--ink-soft);stroke-width:2}
+.tickl{fill:var(--ink-soft);font-family:var(--body);font-weight:700;font-size:11px}
+.ring{fill:none;stroke:var(--grid2);stroke-width:1.2;stroke-dasharray:3 5}
+.sec{fill:var(--hl);fill-opacity:.6;stroke:var(--ink);stroke-width:1.5}
+.cA{fill:var(--hl)}.cB{fill:var(--hl2)}.cC{fill:var(--hl3)}.cD{fill:var(--hl4)}.cP{fill:var(--sheet)}
+.fsec{fill-opacity:.72;stroke:var(--ink);stroke-width:1.3}
+.fpoly{fill-opacity:.55;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.fpoly.soft{fill-opacity:.25}
+.tri{fill:var(--hl3);fill-opacity:.13;stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+.outl{fill:none;stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+.sq{fill:none;stroke:var(--ink);stroke-width:2}
+.eqtick{stroke:var(--pen);stroke-width:2.5;stroke-linecap:round}
+.parm{fill:none;stroke:var(--pen);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.lbl{fill:var(--ink);font-family:var(--display);font-weight:800;font-size:calc(21px*var(--s))}
+.val{fill:var(--ink);font-family:var(--body);font-weight:900;font-size:calc(16px*var(--s));paint-order:stroke;stroke:var(--sheet);stroke-width:4px;stroke-linejoin:round}
+.sml{fill:var(--ink-soft);font-family:var(--body);font-weight:800;font-size:calc(13px*var(--s));paint-order:stroke;stroke:var(--sheet);stroke-width:4px;stroke-linejoin:round}
+.ttl{fill:var(--ink);font-family:var(--display);font-weight:800;font-size:calc(17px*var(--s))}
+.hdl{cursor:grab}
+.dragging,.dragging .hdl{cursor:grabbing}
+.hdl .dot{fill:var(--pen);stroke:var(--sheet);stroke-width:3}
+.hdl .hit{fill:transparent}
+.hdl:hover .dot{stroke-width:5}
+.vtx{fill:var(--ink)}
+.kpt{fill:var(--sheet);stroke:var(--ink);stroke-width:3}
+.ang{fill-opacity:.3;stroke:none;cursor:pointer;outline:none}
+.ang.mate{fill-opacity:.8}
+.ang.sel{fill-opacity:1;stroke:var(--pen);stroke-width:3}
+.ang:hover{fill-opacity:.6}
+.ang.sel:hover{fill-opacity:1}
+.anum{fill:var(--ink);font-family:var(--display);font-weight:800;font-size:calc(17px*var(--s));pointer-events:none}
+.adeg{fill:var(--ink-soft);font-family:var(--body);font-weight:800;font-size:calc(12px*var(--s));pointer-events:none}
+.f3{stroke:var(--ink);stroke-width:1.8;stroke-linejoin:round}
+.f3.sm{stroke-width:.8}
+.f3.sm.cA{stroke:var(--hl)}.f3.sm.cB{stroke:var(--hl2)}.f3.sm.cC{stroke:var(--hl3)}.f3.sm.cD{stroke:var(--hl4)}
+.f3.glass{fill:var(--hl4);fill-opacity:.12}
+.sh3{fill:var(--shade);stroke:none;pointer-events:none}
+.e3h{fill:none;stroke:var(--ink-soft);stroke-width:1.3;stroke-dasharray:5 5}
+.e3{fill:none;stroke:var(--pen);stroke-width:4;stroke-linecap:round}
+.water{fill:var(--hl4);fill-opacity:.75}
+.wline{stroke:var(--ink);stroke-width:1.5}
+.ax{stroke:var(--ink);stroke-width:2}
+.axl{fill:var(--ink-soft);font-family:var(--body);font-weight:700;font-size:11px}
+.dimt{fill:var(--ink);font-family:var(--display);font-weight:800;font-size:calc(16px*var(--s));paint-order:stroke;stroke:var(--sheet);stroke-width:4px}
+.dim{stroke:var(--ink);stroke-width:1.6;fill:none}
+.cyc{fill:none;stroke:var(--pen);stroke-width:2;stroke-dasharray:3 5}
+.okline{stroke:var(--ok);stroke-width:4;stroke-linecap:round}
+.badline{stroke:var(--pen);stroke-width:4;stroke-linecap:round}
+.qshape{fill:var(--hl4);fill-opacity:.35;stroke:var(--ink);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+@media (max-width:600px){body{--s:1.45}body.board{--s:1.6}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .tcard{padding:12px 13px;border-radius:18px}.tcard h3{font-size:17px}.tcard .off{font-size:10px}.tcard .meta{font-size:11px;gap:6px}
+  .big{font-size:26px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <button class="brand" id="home-btn" type="button" aria-label="Ana sayfaya dön">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 34 34"><path d="M5 28 L29 28 M5 28 L22 6" stroke="var(--sheet)" stroke-width="3.2" stroke-linecap="round" fill="none"/><path d="M15 28 A10 10 0 0 0 11 20" stroke="var(--hl)" stroke-width="3.2" fill="none"/></svg>
+      </span>
+      <span><h1>Geometri Keşif Atölyesi</h1><p>Sürükle, ölç, kuralı kendin bul.</p></span>
+    </button>
+    <label class="switch"><input type="checkbox" id="boardMode"> Tahta modu</label>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div>
+        <h2>Bir sınıf seç, bir kapı aç.</h2>
+        <p>Her konuda önce şekilleri sürükleyip keşfet. Sonra <b>Neden?</b> etiketli etkinliklerde formüllerin nereden geldiğini kendi gözünle gör.</p>
+      </div>
+      <div class="grades" id="grades" role="group" aria-label="Sınıf seçimi"></div>
+    </section>
+    <div class="cards" id="cards"></div>
+    <p class="foot">İlerlemen bu tarayıcıda saklanır.</p>
+  </main>
+
+  <main id="topic" hidden>
+    <div class="thead">
+      <button class="back" id="back" type="button">← Tüm konular</button>
+      <div><p class="eyebrow" id="tGrade"></p><h2 id="tTitle"></h2></div>
+    </div>
+    <div class="labs" id="labs" role="tablist" aria-label="Etkinlikler"></div>
+    <section class="panel">
+      <div class="stage">
+        <div class="stage-bar"><span class="hint" id="hint"></span><div class="ctrls" id="bar"></div></div>
+        <div id="svgWrap"></div>
+        <div id="below"></div>
+      </div>
+      <aside class="side">
+        <div class="card" id="info" aria-live="polite"></div>
+        <div class="card note"><h3>Büyük fikir</h3><p id="note"></p></div>
+        <div class="card tasks" id="tasks"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function(){
+"use strict";
+/* ================= yardımcılar ================= */
+const $=(s,r)=>(r||document).querySelector(s);
+const R2D=180/Math.PI,D2R=Math.PI/180,PI=Math.PI;
+const W=640,HT=440,U=40;
+const norm360=a=>((a%360)+360)%360;
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y}),add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}),mul=(a,k)=>({x:a.x*k,y:a.y*k});
+const len=v=>Math.hypot(v.x,v.y),dist=(a,b)=>len(sub(a,b)),cross=(a,b)=>a.x*b.y-a.y*b.x,dot=(a,b)=>a.x*b.x+a.y*b.y;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,lerpP=(p,q,t)=>({x:lerp(p.x,q.x,t),y:lerp(p.y,q.y,t)});
+const mid=(a,b)=>lerpP(a,b,.5);
+const f=n=>(+n).toFixed(1),f2=n=>(+n).toFixed(2);
+function tr(n,d){d=d==null?1:d;let s=(+n).toFixed(d);if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,'');if(s==='-0')s='0';return s.replace('.',',');}
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const snapv=(v,s)=>Math.round(v/(s||U))*(s||U);
+const RM=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const cp=o=>JSON.parse(JSON.stringify(o));
+const PL=['','','','üçgen','dörtgen','beşgen','altıgen','yedigen','sekizgen','dokuzgen','ongen','onbirgen','onikigen'];
+
+function svgPt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+function dirDeg(a,b){return norm360(Math.atan2(-(b.y-a.y),b.x-a.x)*R2D);}
+function polar(c,r,a){const t=a*D2R;return {x:c.x+r*Math.cos(t),y:c.y-r*Math.sin(t)};}
+function sector(c,r,a0,a1){
+  if(a1-a0>=359.9) return `M${f(c.x-r)} ${f(c.y)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0Z`;
+  if(a1-a0<=0.01) return '';
+  const s=polar(c,r,a0),e=polar(c,r,a1),lg=(a1-a0)>180?1:0;
+  return `M${f(c.x)} ${f(c.y)}L${f(s.x)} ${f(s.y)}A${r} ${r} 0 ${lg} 0 ${f(e.x)} ${f(e.y)}Z`;
+}
+function arc(c,r,a0,a1){
+  if(a1-a0>=359.9) return `M${f(c.x-r)} ${f(c.y)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`;
+  if(a1-a0<=0.01) return '';
+  const s=polar(c,r,a0),e=polar(c,r,a1),lg=(a1-a0)>180?1:0;
+  return `M${f(s.x)} ${f(s.y)}A${r} ${r} 0 ${lg} 0 ${f(e.x)} ${f(e.y)}`;
+}
+function rightMark(c,a0,size){const p1=polar(c,size,a0),p3=polar(c,size,a0+90),p2=polar(p1,size,a0+90);return `<path class="sq" d="M${f(p1.x)} ${f(p1.y)}L${f(p2.x)} ${f(p2.y)}L${f(p3.x)} ${f(p3.y)}"/>`;}
+function T(p,str,cls,anchor){return `<text x="${f(p.x)}" y="${f(p.y)}" class="${cls||'val'}" text-anchor="${anchor||'middle'}" dominant-baseline="central">${str}</text>`;}
+function hdl(id,p,label,r){return `<g class="hdl" data-h="${id}"><circle class="hit" cx="${f(p.x)}" cy="${f(p.y)}" r="24"/><circle class="dot" cx="${f(p.x)}" cy="${f(p.y)}" r="${r||10}"/><title>${label||'Sürükle'}</title></g>`;}
+let gridN=0;
+function grid(step,w,h){step=step||U;w=w||W;h=h||HT;const id='g'+(++gridN);return `<defs><pattern id="${id}" width="${step}" height="${step}" patternUnits="userSpaceOnUse"><path d="M${step} 0H0V${step}" class="gl"/></pattern></defs><rect width="${w}" height="${h}" fill="url(#${id})"/>`;}
+function plain(w,h){return `<rect width="${w||W}" height="${h||HT}" fill="none"/>`;}
+function L(a,b,cls){return `<line class="${cls||'ray'}" x1="${f(a.x)}" y1="${f(a.y)}" x2="${f(b.x)}" y2="${f(b.y)}"/>`;}
+function lineFull(a,b,cls){const v=sub(b,a),l=len(v)||1,u={x:v.x/l,y:v.y/l};return L({x:a.x-u.x*1500,y:a.y-u.y*1500},{x:a.x+u.x*1500,y:a.y+u.y*1500},cls);}
+function pd(pts){return 'M'+pts.map(p=>f(p.x)+' '+f(p.y)).join('L')+'Z';}
+function poly(pts,cls,extra){return `<path class="${cls}" d="${pd(pts)}" ${extra||''}/>`;}
+function wedge(v,p,q){let a0=dirDeg(v,p),a1=dirDeg(v,q);let d=norm360(a1-a0);if(d>180){const t=a0;a0=a1;a1=t;d=360-d;}return {s:a0,d};}
+function interior(v,p,q){const u=sub(p,v),w=sub(q,v);const c=dot(u,w)/((len(u)*len(w))||1);return Math.acos(clamp(c,-1,1))*R2D;}
+function round180(arr){const fl=arr.map(Math.floor);let rem=180-fl.reduce((a,b)=>a+b,0);const o=arr.map((v,i)=>[v-Math.floor(v),i]).sort((a,b)=>b[0]-a[0]);for(let k=0;k<rem&&k<3;k++)fl[o[k][1]]++;return fl;}
+function intersect(p1,p2,q1,q2){const r=sub(p2,p1),s=sub(q2,q1),d=cross(r,s);if(Math.abs(d)<1e-9)return null;const t=cross(sub(q1,p1),s)/d;return {x:p1.x+t*r.x,y:p1.y+t*r.y};}
+function foot(P,A,B){const v=sub(B,A),t=dot(sub(P,A),v)/(dot(v,v)||1);return {x:A.x+t*v.x,y:A.y+t*v.y,t};}
+function eqTicks(P,Q,n){n=n||1;const m=mid(P,Q),v=sub(Q,P),l=len(v)||1,u={x:v.x/l,y:v.y/l},nn={x:-u.y,y:u.x};let s='';for(let k=0;k<n;k++){const o=(k-(n-1)/2)*6;const c={x:m.x+u.x*o,y:m.y+u.y*o};s+=`<line class="eqtick" x1="${f(c.x-nn.x*8)}" y1="${f(c.y-nn.y*8)}" x2="${f(c.x+nn.x*8)}" y2="${f(c.y+nn.y*8)}"/>`;}return s;}
+function parArrows(P,Q,n,at){n=n||1;const m=lerpP(P,Q,at==null?.5:at),v=sub(Q,P),l=len(v)||1,u={x:v.x/l,y:v.y/l},nn={x:-u.y,y:u.x};let s='';for(let k=0;k<n;k++){const c={x:m.x+u.x*(k*7),y:m.y+u.y*(k*7)};const b1={x:c.x-u.x*7+nn.x*6,y:c.y-u.y*7+nn.y*6},b2={x:c.x-u.x*7-nn.x*6,y:c.y-u.y*7-nn.y*6};s+=`<path class="parm" d="M${f(b1.x)} ${f(b1.y)}L${f(c.x)} ${f(c.y)}L${f(b2.x)} ${f(b2.y)}"/>`;}return s;}
+function arrowHead(p,deg,sz,cls){sz=sz||13;const a=polar(p,sz,deg+155),b=polar(p,sz,deg-155);return `<path class="${cls||'parm'}" style="stroke:var(--ink)" d="M${f(a.x)} ${f(a.y)}L${f(p.x)} ${f(p.y)}L${f(b.x)} ${f(b.y)}"/>`;}
+function polyArea(pts){let s=0;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];s+=a.x*b.y-b.x*a.y;}return s/2;}
+function segX(a,b,c,d){const d1=cross(sub(b,a),sub(c,a)),d2=cross(sub(b,a),sub(d,a)),d3=cross(sub(d,c),sub(a,c)),d4=cross(sub(d,c),sub(b,c));return ((d1>0&&d2<0)||(d1<0&&d2>0))&&((d3>0&&d4<0)||(d3<0&&d4>0));}
+function selfX(pts){const n=pts.length;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(j===i+1||(i===0&&j===n-1))continue;if(segX(pts[i],pts[(i+1)%n],pts[j],pts[(j+1)%n]))return true;}return false;}
+/* çokgenin iç açıları (basit çokgen) */
+function polyAngles(pts){const n=pts.length;const turns=[];for(let i=0;i<n;i++){const a=pts[(i-1+n)%n],b=pts[i],c=pts[(i+1)%n];const u=sub(b,a),v=sub(c,b);turns.push(Math.atan2(cross(u,v),dot(u,v))*R2D);}const s=Math.sign(turns.reduce((x,y)=>x+y,0))||1;return turns.map(t=>180-s*t);}
+
+/* ================= 3B ================= */
+const v3=(x,y,z)=>({x,y,z}),add3=(a,b)=>v3(a.x+b.x,a.y+b.y,a.z+b.z),sub3=(a,b)=>v3(a.x-b.x,a.y-b.y,a.z-b.z),mul3=(a,k)=>v3(a.x*k,a.y*k,a.z*k);
+const cross3=(a,b)=>v3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x),dot3=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+function cam3(o){return Object.assign({yaw:-0.62,pitch:0.42,s:40,cx:320,cy:250},o||{});}
+function rot3(p,c){const cy=Math.cos(c.yaw),sy=Math.sin(c.yaw);const x=p.x*cy-p.z*sy,z=p.x*sy+p.z*cy;const cpp=Math.cos(c.pitch),sp=Math.sin(c.pitch);return {x,y:p.y*cpp-z*sp,z:p.y*sp+z*cpp};}
+function P3(p,c){const r=rot3(p,c);return {x:c.cx+r.x*c.s,y:c.cy-r.y*c.s,z:r.z};}
+function fcenter(pts){return mul3(pts.reduce(add3,v3(0,0,0)),1/pts.length);}
+function fnormal(pts){let N=v3(0,0,0);for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];N=add3(N,v3((a.y-b.y)*(a.z+b.z),(a.z-b.z)*(a.x+b.x),(a.x-b.x)*(a.y+b.y)));}return N;}
+/* dışbükey cisim: arka yüzler kesikli, ön yüzler dolu */
+function convex3(faces,c,o){o=o||{};let C=v3(0,0,0),n=0;faces.forEach(fc=>fc.p.forEach(p=>{C=add3(C,p);n++;}));C=mul3(C,1/n);
+  let back='',front='',labels='';
+  faces.forEach(fc=>{const ctr=fcenter(fc.p);let N=fnormal(fc.p);if(dot3(N,sub3(ctr,C))<0)N=mul3(N,-1);const nl=Math.hypot(N.x,N.y,N.z)||1;const nz=rot3(N,c).z/nl;
+    const q=fc.p.map(p=>P3(p,c)),d=pd(q);
+    if(nz<=0.002){if(!o.noHidden&&!fc.nohid)back+=`<path class="e3h" d="${d}"/>`;}
+    else{front+=`<path class="f3 ${fc.k||'cA'}" d="${d}"/>`+((fc.k||'').indexOf('glass')>=0?'':`<path class="sh3" d="${d}" style="fill-opacity:${f2(0.34*(1-nz))}"/>`);if(fc.lab){labels+=T(P3(ctr,c),fc.lab,'dimt');}}
+  });
+  return back+front+labels;}
+/* ressam algoritması: derinliğe göre sırala */
+function painter3(faces,c,o){o=o||{};const pr=faces.map(fc=>{const q=fc.p.map(p=>P3(p,c));const N=fnormal(fc.p),nl=Math.hypot(N.x,N.y,N.z)||1;const nz=Math.abs(rot3(N,c).z/nl);return {q,z:q.reduce((s,v)=>s+v.z,0)/q.length+(fc.bias||0),k:fc.k,nz,lab:fc.lab,ctr:fcenter(fc.p),op:fc.op};});
+  pr.sort((a,b)=>a.z-b.z);let s='';pr.forEach(fc=>{const d=pd(fc.q);s+=`<path class="f3 ${fc.k||'cA'}" d="${d}" ${fc.op!=null?`style="fill-opacity:${fc.op}"`:''}/><path class="sh3" d="${d}" style="fill-opacity:${f2(0.34*(1-fc.nz))}"/>`;if(fc.lab)s+=T(P3(fc.ctr,c),fc.lab,'dimt');});return s;}
+function boxFaces(x0,y0,z0,x1,y1,z1,k){const P=v3;const F=[[P(x0,y0,z0),P(x1,y0,z0),P(x1,y0,z1),P(x0,y0,z1)],[P(x0,y1,z0),P(x1,y1,z0),P(x1,y1,z1),P(x0,y1,z1)],[P(x0,y0,z1),P(x1,y0,z1),P(x1,y1,z1),P(x0,y1,z1)],[P(x0,y0,z0),P(x1,y0,z0),P(x1,y1,z0),P(x0,y1,z0)],[P(x0,y0,z0),P(x0,y0,z1),P(x0,y1,z1),P(x0,y1,z0)],[P(x1,y0,z0),P(x1,y0,z1),P(x1,y1,z1),P(x1,y1,z0)]];return F.map((p,i)=>({p,k:Array.isArray(k)?k[i]:(k||'cA')}));}
+function ngon3(n,R,y,off){const a=[];for(let i=0;i<n;i++){const t=2*PI*i/n+(off||0);a.push(v3(R*Math.cos(t),y,R*Math.sin(t)));}return a;}
+function prismFaces(n,a,h,kSide,kCap){const R=a/(2*Math.sin(PI/n)),off=PI/2+PI/n;const b=ngon3(n,R,-h/2,off),t=ngon3(n,R,h/2,off);const F=[{p:b,k:kCap||'cB'},{p:t,k:kCap||'cB'}];for(let i=0;i<n;i++){const j=(i+1)%n;F.push({p:[b[i],b[j],t[j],t[i]],k:kSide||'cA'});}return F;}
+function cylFaces(r,h,n){n=n||48;const b=ngon3(n,r,-h/2,0),t=ngon3(n,r,h/2,0);const F=[{p:b,k:'cB'},{p:t,k:'cB'}];for(let i=0;i<n;i++){const j=(i+1)%n;F.push({p:[b[i],b[j],t[j],t[i]],k:'cA sm',nohid:true});}return F;}
+function coneFaces(r,h,n){n=n||48;const b=ngon3(n,r,-h/2,0),A=v3(0,h/2,0);const F=[{p:b,k:'cB'}];for(let i=0;i<n;i++){const j=(i+1)%n;F.push({p:[b[i],b[j],A],k:'cA sm',nohid:true});}return F;}
+function pyrFaces(a,h){const s=a/2,b=[v3(-s,-h/2,-s),v3(s,-h/2,-s),v3(s,-h/2,s),v3(-s,-h/2,s)],A=v3(0,h/2,0);const F=[{p:b,k:'cB'}];for(let i=0;i<4;i++)F.push({p:[b[i],b[(i+1)%4],A],k:'cA'});return F;}
+
+/* ================= bilgi kartı parçaları ================= */
+const stat=(l,v,s)=>`<div class="stat"><span>${l}</span><b>${v}</b>${s?`<span>${s}</span>`:''}</div>`;
+const stats=(...a)=>`<div class="stats${a.length===3?' three':''}">${a.join('')}</div>`;
+const head=(eb,big,pill,desc,pc)=>`${eb?`<p class="eyebrow">${eb}</p>`:''}<p class="big">${big}</p>${pill?`<span class="pill ${pc||''}">${pill}</span>`:''}${desc?`<p class="desc">${desc}</p>`:''}`;
+const checks=items=>`<ul class="checks">${items.map(([ok,t])=>`<li class="${ok?'y':'n'}">${t}</li>`).join('')}</ul>`;
+
+/* ================= uygulama ================= */
+const Topics=[];const reg=t=>Topics.push(t);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let GEN=0,cur=null,justK=null,toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400);}
+const doneSet=id=>new Set(store.get('gka2-'+id)||[]);
+
+function makeApi(t,li){
+  const g=GEN;
+  const wrap=$('#svgWrap');wrap.innerHTML='';
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${HT}`);svg.setAttribute('role','img');svg.setAttribute('aria-label',t.labs[li].name+' çizim alanı');
+  wrap.appendChild(svg);
+  const bar=$('#bar'),below=$('#below');bar.innerHTML='';below.innerHTML='';
+  let nid=0;const uid=()=>`c${g}-${++nid}`;
+  const api={svg,bar,below,
+    alive:()=>g===GEN,
+    view(w,h){svg.setAttribute('viewBox',`0 0 ${w} ${h}`);},
+    draw(s){svg.innerHTML=s;},
+    info(h){$('#info').innerHTML=h;},
+    hint(s){$('#hint').textContent=s||'';},
+    done(k){if(g!==GEN)return;const ds=doneSet(t.id);if(ds.has(k))return;const tk=t.tasks.find(x=>x.k===k);if(!tk)return;ds.add(k);store.set('gka2-'+t.id,[...ds]);justK=k;renderTasks();toast(ds.size===t.tasks.length?'Harika! Bu konunun tüm görevleri tamam.':'Görev tamamlandı: '+tk.text);},
+    _move:null,_orb:null,
+    drag(fn){api._move=fn;},
+    orbit(cam,render){api._orb={cam,render};},
+    button(label,fn,o){o=o||{};const b=document.createElement('button');b.type='button';b.className='btn'+(o.primary?' primary':'');b.innerHTML=label;if(o.pressed!=null)b.setAttribute('aria-pressed',o.pressed);b.onclick=()=>fn(b);(o.where||bar).appendChild(b);return b;},
+    seg(opts,val,fn,o){o=o||{};const d=document.createElement('div');d.className='segm';d.setAttribute('role','group');if(o.label)d.setAttribute('aria-label',o.label);
+      const bs=opts.map(([v,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.dataset.v=v;b.setAttribute('aria-pressed',String(v)===String(val));b.onclick=()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===b));fn(v);};d.appendChild(b);return b;});
+      (o.where||bar).appendChild(d);return {el:d,set(v){bs.forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===String(v)));}};},
+    check(label,val,fn,o){o=o||{};const l=document.createElement('label');l.className='chk';const id=uid();l.innerHTML=`<input type="checkbox" id="${id}" ${val?'checked':''}> ${label}`;l.querySelector('input').onchange=e=>fn(e.target.checked);(o.where||bar).appendChild(l);return l.querySelector('input');},
+    slider(o){const row=document.createElement('div');row.className='srow';const id=uid();const fmt=o.fmt||(v=>tr(v,2));
+      row.innerHTML=`<label for="${id}">${o.label}</label><input type="range" id="${id}" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${o.value}"><output for="${id}">${fmt(o.value)}</output>`;
+      const inp=row.querySelector('input'),out=row.querySelector('output');
+      const sl={min:o.min,max:o.max,input:inp,v:+o.value,playing:false,
+        set(v,fire){sl.v=v;inp.value=v;out.textContent=fmt(v);if(fire&&o.onInput)o.onInput(v);},
+        get:()=>sl.v};
+      inp.addEventListener('input',()=>{sl.playing=false;sl.set(+inp.value,true);});
+      if(o.play){const b=document.createElement('button');b.type='button';b.className='btn primary';b.innerHTML='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1L11 6L2 11Z" fill="currentColor"/></svg>Oynat';
+        b.onclick=()=>{if(sl.playing){sl.playing=false;return;}const mx=+sl.max,mn=+sl.min;let from=sl.v;if(from>=mx-1e-6)from=mn;if(RM){sl.set(mx,true);return;}
+          const dur=Math.max(1,(o.dur||3000)*(mx-from)/((mx-mn)||1)),t0=performance.now();sl.playing=true;
+          const step=now=>{if(g!==GEN||!sl.playing)return;const k=Math.min(1,(now-t0)/dur);sl.set(from+(mx-from)*k,true);if(k<1)requestAnimationFrame(step);else sl.playing=false;};requestAnimationFrame(step);};
+        row.appendChild(b);}
+      else row.appendChild(document.createElement('span'));
+      (o.where||below).appendChild(row);return sl;},
+    loop(fn){let last=performance.now();const step=now=>{if(g!==GEN)return;const dt=Math.min(50,now-last);last=now;if(fn(dt)!==false)requestAnimationFrame(step);};requestAnimationFrame(step);},
+    later(fn,ms){setTimeout(()=>{if(g===GEN)fn();},ms);}
+  };
+  let dragId=null,orbOn=false,last=null;
+  svg.addEventListener('pointerdown',e=>{const h=e.target.closest('[data-h]');
+    if(h&&api._move){dragId=h.dataset.h;try{svg.setPointerCapture(e.pointerId)}catch(_){}svg.classList.add('dragging');e.preventDefault();api._move(dragId,svgPt(svg,e),true);}
+    else if(api._orb&&!e.target.closest('[data-ang]')){orbOn=true;last={x:e.clientX,y:e.clientY};try{svg.setPointerCapture(e.pointerId)}catch(_){}svg.classList.add('dragging');e.preventDefault();}});
+  svg.addEventListener('pointermove',e=>{if(dragId!==null){e.preventDefault();api._move(dragId,svgPt(svg,e),false);}
+    else if(orbOn){const c=api._orb.cam;c.yaw+=(e.clientX-last.x)*0.012;c.pitch=clamp(c.pitch+(e.clientY-last.y)*0.01,-0.15,1.45);last={x:e.clientX,y:e.clientY};api._orb.render();}});
+  const end=()=>{dragId=null;orbOn=false;svg.classList.remove('dragging');};
+  svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+  return api;
+}
+
+function renderTasks(){
+  const t=cur.t,ds=doneSet(t.id),n=t.tasks.filter(x=>ds.has(x.k)).length,tot=t.tasks.length;
+  const el=$('#tasks');
+  el.innerHTML=`<div class="head"><h3>Görevler</h3><span class="count">${n}/${tot}</span></div><div class="prog"><i style="width:${n/tot*100}%"></i></div>
+  <ul>${t.tasks.map(tk=>`<li><button type="button" class="tk${ds.has(tk.k)?' done':''}${tk.k===justK?' just':''}" data-lab="${tk.lab||0}"><span class="box" aria-hidden="true"></span><span>${tk.text}<small>${t.labs[tk.lab||0].name}${tk.hint?' · '+tk.hint:''}</small></span></button></li>`).join('')}</ul>
+  <button class="linkbtn" type="button" id="resetTasks">Görevleri sıfırla</button>`;
+  justK=null;
+  el.querySelectorAll('.tk').forEach(b=>b.onclick=()=>{const li=+b.dataset.lab;if(li!==cur.li)runLab(li);});
+  $('#resetTasks').onclick=()=>{store.set('gka2-'+t.id,[]);renderTasks();};
+}
+function runLab(li){
+  GEN++;cur.li=li;const t=cur.t,lab=t.labs[li];
+  document.querySelectorAll('.lab').forEach((b,i)=>{b.setAttribute('aria-selected',i===li);b.tabIndex=i===li?0:-1;});
+  $('#note').innerHTML=lab.note||'';$('#info').innerHTML='';$('#hint').textContent='';
+  const api=makeApi(t,li);
+  try{lab.init(api);}catch(err){console.error(err);api.info('<p class="desc">Bu etkinlik yüklenemedi.</p>');}
+  renderTasks();
+  setHash('t-'+t.id+(li?'.'+li:''));
+}
+function setHash(h){try{history.replaceState(null,'','#'+h)}catch(e){}}
+function openTopic(id,li){
+  const t=Topics.find(x=>x.id===id);if(!t)return showHome();
+  cur={t,li:0};
+  $('#home').hidden=true;$('#topic').hidden=false;
+  $('#tGrade').textContent=`${t.g}. Sınıf · ${t.sub}`;$('#tTitle').textContent=t.title;
+  const labs=$('#labs');labs.innerHTML='';
+  t.labs.forEach((lab,i)=>{const b=document.createElement('button');b.type='button';b.className='lab';b.setAttribute('role','tab');b.innerHTML=`${lab.name}${lab.why?'<span class="why">NEDEN?</span>':''}`;b.onclick=()=>runLab(i);
+    b.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const n=(i+(e.key==='ArrowRight'?1:t.labs.length-1))%t.labs.length;runLab(n);labs.children[n].focus();}};labs.appendChild(b);});
+  runLab(clamp(li||0,0,t.labs.length-1));
+  window.scrollTo(0,0);
+}
+let grade=store.get('gka2-grade')||5;
+function showHome(){
+  GEN++;cur=null;$('#topic').hidden=true;$('#home').hidden=false;
+  const gd=$('#grades');gd.innerHTML='';
+  [5,6,7,8].forEach(g=>{const b=document.createElement('button');b.type='button';b.className='grade';b.innerHTML=`<b>${g}.</b> Sınıf`;b.setAttribute('aria-pressed',g===grade);b.onclick=()=>{grade=g;store.set('gka2-grade',g);showHome();};gd.appendChild(b);});
+  const cols=['var(--hl)','var(--hl2)','var(--hl3)','var(--hl4)'];
+  $('#cards').innerHTML=Topics.filter(t=>t.g===grade).map((t,i)=>{const ds=doneSet(t.id),n=t.tasks.filter(x=>ds.has(x.k)).length;
+    return `<button type="button" class="tcard" data-id="${t.id}" style="--c:${cols[i%4]}"><span class="off">${t.sub}</span><span class="ic" aria-hidden="true"><svg viewBox="0 0 120 120">${t.icon}</svg></span><h3>${t.title}</h3><span class="meta">${t.labs.length} etkinlik<span class="mini"><i style="width:${n/t.tasks.length*100}%"></i></span>${n}/${t.tasks.length}</span></button>`;}).join('');
+  document.querySelectorAll('.tcard').forEach(c=>c.onclick=()=>openTopic(c.dataset.id,0));
+  setHash('g'+grade);
+}
+function boot(){
+  $('#home-btn').onclick=showHome;$('#back').onclick=showHome;
+  const bm=$('#boardMode');bm.checked=!!store.get('gka-board');document.body.classList.toggle('board',bm.checked);
+  bm.onchange=()=>{document.body.classList.toggle('board',bm.checked);store.set('gka-board',bm.checked);};
+  const h=(location.hash||'').slice(1);
+  if(h.indexOf('t-')===0){const [id,li]=h.slice(2).split('.');openTopic(id,+li||0);}
+  else{const m=/^g([5-8])$/.exec(h);if(m)grade=+m[1];showHome();}
+}
+
+/* ================= ortak etkinlik parçaları ================= */
+/* --- üçgen --- */
+function triState(P){
+  const {A:a,B:b,C:c}=P;const sa=dist(b,c),sb=dist(c,a),sc=dist(a,b);
+  const area=Math.abs(cross(sub(b,a),sub(c,a)))/2;const mx=Math.max(sa,sb,sc);
+  const degen=area<mx*mx*0.02||Math.min(sa,sb,sc)<1;
+  const raw=[interior(a,b,c),interior(b,c,a),interior(c,a,b)];const ang=degen?[0,0,0]:round180(raw);
+  const eq=(x,y)=>Math.abs(x-y)/Math.max(x,y)<0.015;let bySide,eqs=[];
+  if(!degen&&Math.max(...raw)-Math.min(...raw)<=2.5){bySide='Eşkenar';eqs=['AB','BC','CA'];}
+  else{if(eq(sc,sa))eqs=['AB','BC'];else if(eq(sa,sb))eqs=['BC','CA'];else if(eq(sc,sb))eqs=['AB','CA'];bySide=eqs.length?'İkizkenar':'Çeşitkenar';}
+  const m=Math.max(...ang);const byAng=m===90?'Dik açılı':m>90?'Geniş açılı':'Dar açılı';
+  return {raw,ang,sa,sb,sc,area,degen,bySide,byAng,eqs};
+}
+function triDraw(P,st,o){o=o||{};const V=[P.A,P.B,P.C],nm=o.names||['A','B','C'],cl=o.colors||['cA','cB','cC'];
+  const G={x:(P.A.x+P.B.x+P.C.x)/3,y:(P.A.y+P.B.y+P.C.y)/3};let s=`<path class="tri" d="${pd(V)}"/>`;
+  if(!st.degen){
+    if(o.angles!==false)V.forEach((v,i)=>{const w=wedge(v,V[(i+1)%3],V[(i+2)%3]);
+      if(st.ang[i]===90)s+=`<path class="fsec ${cl[i]}" style="stroke:none" d="${sector(v,22,w.s,w.s+w.d)}"/>`+rightMark(v,w.s,22);
+      else s+=`<path class="fsec ${cl[i]}" d="${sector(v,32,w.s,w.s+w.d)}"/>`;
+      if(o.angleVals!==false)s+=T(polar(v,st.ang[i]<35?72:56,w.s+w.d/2),st.ang[i]+'°','val');});
+    const sides=[['AB',P.A,P.B,st.sc],['BC',P.B,P.C,st.sa],['CA',P.C,P.A,st.sb]];
+    sides.forEach(([n,p,q,l])=>{if(o.ticks!==false&&st.eqs.includes(n))s+=eqTicks(p,q);
+      if(o.sides!==false){const m=mid(p,q),d=sub(m,G),dl=len(d)||1;s+=T({x:m.x+d.x/dl*22,y:m.y+d.y/dl*22},tr(l/(o.unit||U))+' br','sml');}});
+  }
+  if(o.labels!==false)V.forEach((v,i)=>{const d=sub(v,G),dl=len(d)||1;s+=T({x:v.x+d.x/dl*30,y:v.y+d.y/dl*30},nm[i],'lbl');});
+  return s;}
+function triHandles(P){return ['A','B','C'].map(k=>hdl(k,P[k],k+' köşesini sürükle')).join('');}
+function triMove(P,id,p,snap,box){box=box||[U,U,W-U,HT-U];let x,y;if(snap){x=clamp(snapv(p.x),box[0],box[2]);y=clamp(snapv(p.y),box[1],box[3]);}else{x=clamp(Math.round(p.x),box[0]-16,box[2]+16);y=clamp(Math.round(p.y),box[1]-16,box[3]+16);}
+  if(P[id].x===x&&P[id].y===y)return false;P[id]={x,y};return true;}
+function triAngInfo(st){const [a,b,c]=st.ang;return `<ul class="rows"><li><i class="sw cA"></i>m(∠A)<b>${a}°</b></li><li><i class="sw cB"></i>m(∠B)<b>${b}°</b></li><li><i class="sw cC"></i>m(∠C)<b>${c}°</b></li></ul><p class="eqn">${a}° + ${b}° + ${c}° = 180°</p>`;}
+const degenInfo=()=>head('Ölçüm','Üçgen yok!','Köşeler aynı doğru üzerinde','Üç köşe tek bir doğru üzerine gelince üçgen oluşmaz. Bir köşeyi yukarı ya da aşağı çek.','warn');
+
+/* --- dörtgen --- */
+function quadState(Q){
+  const n=4,sides=[],dirs=[];for(let i=0;i<n;i++){const a=Q[i],b=Q[(i+1)%n];sides.push(dist(a,b));dirs.push(sub(b,a));}
+  const bad=selfX(Q)||Math.abs(polyArea(Q))<200;
+  const par=(u,v)=>Math.abs(cross(u,v))/(len(u)*len(v)||1)<0.004;
+  const p02=par(dirs[0],dirs[2]),p13=par(dirs[1],dirs[3]);
+  const ang=bad?[0,0,0,0]:polyAngles(Q).map(Math.round);
+  const allR=ang.every(a=>a===90);const eq=(x,y)=>Math.abs(x-y)/Math.max(x,y)<0.015;
+  const allE=eq(sides[0],sides[1])&&eq(sides[1],sides[2])&&eq(sides[2],sides[3]);
+  const convex=!bad&&ang.every(a=>a<180);
+  let name='Dörtgen';
+  if(bad)name='Dörtgen değil';
+  else if(allR&&allE)name='Kare';else if(allR)name='Dikdörtgen';else if(allE)name='Eşkenar dörtgen';
+  else if(p02&&p13)name='Paralelkenar';else if(p02||p13)name='Yamuk';
+  else if(convex&&((eq(sides[0],sides[1])&&eq(sides[2],sides[3]))||(eq(sides[1],sides[2])&&eq(sides[3],sides[0]))))name='Deltoid';
+  const d1=dist(Q[0],Q[2]),d2=dist(Q[1],Q[3]);const D=intersect(Q[0],Q[2],Q[1],Q[3]);
+  const dPerp=Math.abs(dot(sub(Q[2],Q[0]),sub(Q[3],Q[1])))/(d1*d2||1)<0.006;
+  const bisect=D&&convex&&Math.abs(dist(Q[0],D)-dist(D,Q[2]))<2&&Math.abs(dist(Q[1],D)-dist(D,Q[3]))<2;
+  return {sides,ang,p02,p13,allR,allE,name,bad,convex,d1,d2,dEq:eq(d1,d2),dPerp,bisect,D};
+}
+function quadDraw(Q,st,o){o=o||{};const nm=['A','B','C','D'];let s=`<path class="tri" style="fill:var(--hl4);fill-opacity:.16" d="${pd(Q)}"/>`;
+  const G={x:Q.reduce((a,p)=>a+p.x,0)/4,y:Q.reduce((a,p)=>a+p.y,0)/4};
+  if(!st.bad){
+    if(o.diag){s+=L(Q[0],Q[2],'dash')+L(Q[1],Q[3],'dash');if(st.D){if(st.dPerp)s+=rightMark(st.D,dirDeg(st.D,Q[2]),12);s+=`<circle class="kpt" cx="${f(st.D.x)}" cy="${f(st.D.y)}" r="4"/>`;}}
+    Q.forEach((v,i)=>{const p=Q[(i+3)%4],q=Q[(i+1)%4];const w=wedge(v,p,q);if(st.ang[i]>180)return;
+      if(st.ang[i]===90)s+=rightMark(v,w.s,18);else s+=`<path class="sec" style="fill-opacity:.35" d="${sector(v,24,w.s,w.s+w.d)}"/>`;
+      s+=T(polar(v,46,w.s+w.d/2),st.ang[i]+'°','sml');});
+    const eq=(x,y)=>Math.abs(x-y)/Math.max(x,y)<0.015;
+    const grp=[0,0,0,0];let gn=0;for(let i=0;i<4;i++){if(grp[i])continue;const same=[i];for(let j=i+1;j<4;j++)if(!grp[j]&&eq(st.sides[i],st.sides[j]))same.push(j);if(same.length>1){gn++;same.forEach(k=>grp[k]=gn);}}
+    for(let i=0;i<4;i++){const a=Q[i],b=Q[(i+1)%4];if(grp[i])s+=eqTicks(a,b,grp[i]);
+      const m=mid(a,b),d=sub(m,G),dl=len(d)||1;s+=T({x:m.x+d.x/dl*20,y:m.y+d.y/dl*20},tr(st.sides[i]/U)+' br','sml');}
+    if(st.p02){s+=parArrows(Q[0],Q[1],1,.32)+parArrows(Q[3],Q[2],1,.32);}
+    if(st.p13){s+=parArrows(Q[1],Q[2],2,.3)+parArrows(Q[0],Q[3],2,.3);}
+  }
+  Q.forEach((v,i)=>{const d=sub(v,G),dl=len(d)||1;s+=T({x:v.x+d.x/dl*28,y:v.y+d.y/dl*28},nm[i],'lbl');});
+  s+=Q.map((v,i)=>hdl('q'+i,v,nm[i]+' köşesini sürükle')).join('');
+  return s;}
+function quadInfo(st,diag){
+  if(st.bad)return head('Dörtgen ailesi','Dörtgen değil','Kenarlar kesişiyor','Kenarların birbirini kesmemesi gerekir. Bir köşeyi geri çek.','warn');
+  const desc={Kare:'Dört kenarı eşit, dört açısı dik.',Dikdörtgen:'Dört açısı da 90°. Karşılıklı kenarlar eşit ve paralel.','Eşkenar dörtgen':'Dört kenarı eşit. Karşılıklı açılar eşit.',Paralelkenar:'Karşılıklı kenarlar paralel ve eşit.',Yamuk:'Yalnızca bir çift karşılıklı kenar paralel.',Deltoid:'Komşu kenarlardan ikişer ikişer eşit, uçurtma biçimi.',Dörtgen:'Özel bir adı yok: genel dörtgen.'}[st.name];
+  let h=head('Dörtgen ailesi',st.name,null,desc)+checks([[st.p02&&st.p13,'İki çift karşılıklı kenar paralel'],[st.p02!==st.p13,'Yalnız bir çift kenar paralel'],[st.allE,'Dört kenar eşit'],[st.allR,'Dört açı 90°']]);
+  h+=`<p class="eqn">${st.ang.join('° + ')}° = ${st.ang.reduce((a,b)=>a+b,0)}°<small>Dörtgenin iç açıları toplamı</small></p>`;
+  if(diag)h+=`<p class="eyebrow" style="margin-top:12px">Köşegenler</p>`+checks([[st.dEq,`Uzunlukları eşit (${tr(st.d1/U)} ve ${tr(st.d2/U)} br)`],[st.dPerp,'Birbirine dik'],[st.bisect,'Birbirini ortalar']]);
+  return h;}
+function quadMove(Q,id,p,snap){const i=+id.slice(1);const x=clamp(snap?snapv(p.x):Math.round(p.x),U,W-U),y=clamp(snap?snapv(p.y):Math.round(p.y),U,HT-U);if(Q[i].x===x&&Q[i].y===y)return false;Q[i]={x,y};return true;}
+
+/* --- paralel iki doğru + kesen --- */
+function kesenRel(i,j){const li=i>>2,lj=j>>2,pi=i%4,pj=j%4,eq=(pi%2)===(pj%2);
+  if(li===lj)return {name:(pi+2)%4===pj?'Ters açılar':'Komşu bütünler açılar',eq};
+  const top=li===0?pi:pj,bot=li===0?pj:pi;if(top===bot)return {name:'Yöndeş açılar',eq};
+  const mp={'20':'İç ters açılar','31':'İç ters açılar','02':'Dış ters açılar','13':'Dış ters açılar','30':'Karşı durumlu iç açılar','21':'Karşı durumlu iç açılar','03':'Karşı durumlu dış açılar','12':'Karşı durumlu dış açılar'};
+  return {name:mp[''+top+bot]||'Bütünler açılar',eq};}
+function kesenDraw(S,o){o=o||{};const {y1,y2,al}=S,M={x:320,y:(y1+y2)/2},t=al*D2R;
+  const X=y=>({x:M.x+(Math.abs(al-90)<0.01?0:(M.y-y)/Math.tan(t)),y});const X1=X(y1),X2=X(y2);
+  const VAL=i=>(i%2===0?al:180-al);
+  let s=grid();s+=L({x:0,y:y1},{x:W,y:y1})+L({x:0,y:y2},{x:W,y:y2});
+  s+=parArrows({x:540,y:y1},{x:600,y:y1})+parArrows({x:540,y:y2},{x:600,y:y2});
+  s+=lineFull(M,polar(M,10,al),'ray thin');
+  const st=[0,al,180,180+al],en=[al,180,180+al,360];
+  [X1,X2].forEach((Xp,li)=>{for(let p=0;p<4;p++){const i=li*4+p,g=p%2===0?'cA':'cB';let c='';
+    if(o.sel!=null){if(i===o.sel)c=' sel';else if(kesenRel(o.sel,i).eq)c=' mate';}
+    if(o.hide&&o.hide.indexOf(i)<0&&i!==o.ask&&i!==o.given)continue;
+    s+=`<path class="ang ${g}${c}" data-ang="${i}" tabindex="0" role="button" aria-label="${i+1} numaralı açı" d="${sector(Xp,48,st[p],en[p])}"/>`;}});
+  [X1,X2].forEach((Xp,li)=>{for(let p=0;p<4;p++){const i=li*4+p,m=(st[p]+en[p])/2,sm=(en[p]-st[p])<45;
+    if(o.quiz){if(i===o.given)s+=T(polar(Xp,sm?70:66,m),VAL(i)+'°','val');else if(i===o.ask)s+=T(polar(Xp,sm?66:62,m),'x','lbl');continue;}
+    s+=T(polar(Xp,sm?36:30,m),i+1,'anum');if(o.vals!==false)s+=T(polar(Xp,sm?66:64,m),VAL(i)+'°','adeg');}});
+  s+=`<circle class="vtx" cx="${f(X1.x)}" cy="${y1}" r="4.5"/><circle class="vtx" cx="${f(X2.x)}" cy="${y2}" r="4.5"/>`;
+  s+=T({x:612,y:y1-16},'d','lbl')+T({x:612,y:y2-16},'e','lbl');
+  const Hy=y1-70,Hp=polar(M,(M.y-Hy)/Math.sin(t),al);s+=T(polar(Hp,22,al-90),'k','lbl');
+  if(o.handles!==false)s+=hdl('y1',{x:36,y:y1},'d doğrusunu kaydır')+hdl('y2',{x:36,y:y2},'e doğrusunu kaydır')+hdl('k',Hp,'Keseni döndür');
+  return {s,VAL};}
+function kesenMove(S,id,p){if(id==='y1')S.y1=clamp(snapv(p.y,10),100,S.y2-80);else if(id==='y2')S.y2=clamp(snapv(p.y,10),S.y1+80,400);else{const M={x:320,y:(S.y1+S.y2)/2};let a=dirDeg(M,p);if(a>180)a-=180;S.al=clamp(Math.round(a),25,155);}}
+function kesenLab(keys){return function(api){
+  const S={y1:140,y2:300,al:62,sel:0};
+  api.hint('Bir açıya dokun, kırmızı noktaları sürükle.');
+  const sl=api.slider({label:'Kesenin eğimi',min:25,max:155,step:1,value:S.al,fmt:v=>Math.round(v)+'°',onInput:v=>{S.al=Math.round(v);render(false);}});
+  function render(clicked,focus){const r=kesenDraw(S,{sel:S.sel});api.draw(r.s);sl.set(S.al);
+    const rows=[0,1,2,3,4,5,6,7].filter(j=>j!==S.sel).map(j=>Object.assign({j},kesenRel(S.sel,j))).sort((a,b)=>b.eq-a.eq||a.j-b.j);
+    api.info(head('d ∥ e, k kesen doğru',`m(∠${S.sel+1}) = ${r.VAL(S.sel)}°`,null,'Seçili açıyla diğer açıların ilişkisi. Başka bir açıya dokunarak değiştir.')+`<ul class="rel">${rows.map(x=>`<li class="${x.eq?'eq':'sup'}"><b>∠${x.j+1}</b><span>${x.name}</span><em>${x.eq?'eşit':'toplam 180°'}</em></li>`).join('')}</ul>`);
+    if(focus!=null){const el=api.svg.querySelector(`[data-ang="${focus}"]`);if(el&&el.focus)el.focus({preventScroll:true});}
+    if(keys){if(S.al===90&&keys.dik)api.done(keys.dik);if(S.al===60&&keys.alt)api.done(keys.alt);if(clicked&&S.sel===2&&keys.ic)api.done(keys.ic);if(clicked&&S.sel===6&&keys.yon)api.done(keys.yon);}}
+  api.drag((id,p)=>{kesenMove(S,id,p);render(false);});
+  const pick=e=>{const a=e.target.closest('[data-ang]');if(!a)return;S.sel=+a.dataset.ang;render(true,S.sel);};
+  api.svg.addEventListener('click',pick);api.svg.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e);}});
+  render(false);};}
+
+/* --- kutu açınımı (dikdörtgenler prizması) --- */
+function netFaces(a,b,c,t){
+  const ph=t*PI/2,cs=Math.cos(ph),sn=Math.sin(ph),x0=-a/2,x1=a/2,z0=-b/2,z1=b/2;
+  const F=[];F.push({p:[v3(x0,0,z0),v3(x1,0,z0),v3(x1,0,z1),v3(x0,0,z1)],k:'cA',n:'alt'});
+  const up=(h,d)=>add3(h,d);
+  const dF=v3(0,cs,sn),dB=v3(0,cs,-sn),dR=v3(sn,cs,0),dL=v3(-sn,cs,0);
+  F.push({p:[v3(x0,0,z1),v3(x1,0,z1),up(v3(x1,0,z1),mul3(dF,c)),up(v3(x0,0,z1),mul3(dF,c))],k:'cB',n:'ön'});
+  const bt0=up(v3(x0,0,z0),mul3(dB,c)),bt1=up(v3(x1,0,z0),mul3(dB,c));
+  F.push({p:[v3(x0,0,z0),v3(x1,0,z0),bt1,bt0],k:'cB',n:'arka'});
+  F.push({p:[v3(x1,0,z0),v3(x1,0,z1),up(v3(x1,0,z1),mul3(dR,c)),up(v3(x1,0,z0),mul3(dR,c))],k:'cC',n:'sağ'});
+  F.push({p:[v3(x0,0,z0),v3(x0,0,z1),up(v3(x0,0,z1),mul3(dL,c)),up(v3(x0,0,z0),mul3(dL,c))],k:'cC',n:'sol'});
+  const uy=cs,uz=-sn,wy=sn,wz=cs;const dT=v3(0,cs*wy+sn*uy,cs*wz+sn*uz);
+  F.push({p:[bt0,bt1,add3(bt1,mul3(dT,b)),add3(bt0,mul3(dT,b))],k:'cA',n:'üst'});
+  return F;}
+
+function netCam(cam,a,b,c,k){const sF=Math.min(cam.s,380/(2*b+2*c),560/(a+2*c));const s2=lerp(cam.s,sF,k);return Object.assign({},cam,{yaw:lerp(cam.yaw,0,k*k),pitch:lerp(cam.pitch,1.5,k*k),s:s2,cy:lerp(cam.cy,220+b*s2/2,k)});}
+/* --- birim küp yığını --- */
+function cubesFaces(cells,k){const has=new Set(cells.map(c=>c.join(',')));const F=[];
+  cells.forEach(([x,y,z])=>{const nb=[[0,-1,0],[0,1,0],[0,0,1],[0,0,-1],[-1,0,0],[1,0,0]];const bf=boxFaces(x,y,z,x+1,y+1,z+1,k||'cA');
+    bf.forEach((fc,i)=>{const d=nb[i];if(!has.has([x+d[0],y+d[1],z+d[2]].join(',')))F.push(fc);});});return F;}
+
+/* ======================= 5. SINIF ======================= */
+
+/* ---------- Temel kavramlar ---------- */
+reg({id:'k5',g:5,sub:'Temel Geometrik Kavramlar',title:'Noktadan Sonsuza',
+icon:'<path class="is" d="M14 88L106 32"/><path class="is" d="M95 30L106 32L101 43"/><path class="is" d="M25 90L14 88L19 77"/><circle class="if" cx="44" cy="70" r="9"/><circle class="if" cx="78" cy="49" r="9"/>',
+tasks:[
+ {k:'p5',text:'5 br uzunluğunda bir doğru parçası çiz',lab:0,hint:'Köşegen de olabilir!'},
+ {k:'isin',text:'Bir ışın oluştur, uç noktalarını say',lab:0},
+ {k:'dogru',text:'Doğru görünümüne geç',lab:0},
+ {k:'fan',text:'A noktasından geçen birçok doğruyu göster',lab:1},
+ {k:'tek',text:'A\'dan geçen doğruyu B\'den de geçir',lab:1}],
+labs:[
+{name:'Çizgi Çeşitleri',note:'Doğru parçasının iki ucu vardır, ölçülebilir. Işının tek ucu vardır, öbür yanı sonsuza gider. Doğrunun hiç ucu yoktur, iki yönde de sonsuza uzanır.',
+init(api){
+  const S={A:{x:200,y:280},B:{x:400,y:160},m:'seg'};
+  api.hint('A ve B noktalarını sürükle.');
+  api.seg([['seg','Doğru parçası'],['ray','Işın'],['line','Doğru']],S.m,v=>{S.m=v;render(true);},{label:'Çizgi türü'});
+  function render(user){
+    const {A,B}=S,v=sub(B,A),l=len(v),u={x:v.x/l,y:v.y/l},n={x:-u.y,y:u.x};let s=grid();
+    if(S.m==='seg')s+=L(A,B);
+    else if(S.m==='ray'){const E={x:B.x+u.x*90,y:B.y+u.y*90};s+=L(A,E)+arrowHead(E,dirDeg(A,E),16);}
+    else{const E1={x:A.x-u.x*90,y:A.y-u.y*90},E2={x:B.x+u.x*90,y:B.y+u.y*90};s+=L(E1,E2)+arrowHead(E2,dirDeg(A,B),16)+arrowHead(E1,dirDeg(B,A),16);}
+    s+=T({x:A.x+n.x*24,y:A.y+n.y*24},'A','lbl')+T({x:B.x+n.x*24,y:B.y+n.y*24},'B','lbl');
+    if(S.m==='seg')s+=T({x:(A.x+B.x)/2-n.x*20,y:(A.y+B.y)/2-n.y*20},tr(l/U)+' br','sml');
+    s+=hdl('A',A,'A noktası')+hdl('B',B,'B noktası');api.draw(s);
+    const ov=`<span style="display:inline-block;position:relative;padding-top:.32em">AB<span style="position:absolute;left:0;right:0;top:-.2em;text-align:center;font-size:.62em">⟷</span></span>`;
+    const I={seg:['[AB]','Doğru parçası','İki ucu var: A ve B. Uzunluğu ölçülebilir.','2',tr(l/U)+' br'],
+      ray:['[AB','Işın','Başlangıç noktası A. B yönünde sonsuza gider.','1','Ölçülemez'],
+      line:[ov,'Doğru','Hiç ucu yok. İki yönde de sonsuza uzanır.','0','Ölçülemez']}[S.m];
+    api.info(head('Gösterim',I[0],I[1],I[2])+stats(stat('Uç nokta',I[3]),stat('Uzunluk',I[4]))+`<p class="desc">Nokta bir yer belirtir; eni, boyu, kalınlığı yoktur. Büyük harfle adlandırılır: A, B…</p>`);
+    if(user){if(S.m==='seg'&&Math.abs(l-5*U)<0.5)api.done('p5');if(S.m==='ray')api.done('isin');if(S.m==='line')api.done('dogru');}
+  }
+  api.drag((id,p)=>{const x=clamp(snapv(p.x),U,W-U),y=clamp(snapv(p.y),U,HT-U);const o=S[id==='A'?'B':'A'];if(o.x===x&&o.y===y)return;if(S[id].x===x&&S[id].y===y)return;S[id]={x,y};render(true);});
+  render(false);}},
+{name:'İki Noktadan Kaç Doğru?',why:true,note:'Bir noktadan sonsuz sayıda doğru geçer. Ama iki farklı noktadan yalnızca bir doğru geçer. Bu yüzden iki nokta bir doğruyu tek başına belirler.',
+init(api){
+  const A={x:220,y:270},B={x:460,y:150},S={th:150,fan:false};
+  api.hint('Kırmızı noktayı sürükleyerek doğruyu A etrafında döndür.');
+  const fb=api.button('Birçok doğru çiz',b=>{S.fan=!S.fan;b.setAttribute('aria-pressed',S.fan);render(true,'fan');},{pressed:false});
+  const tgt=dirDeg(A,B)%180;
+  function render(user,what){let s=grid();
+    if(S.fan)for(let k=0;k<180;k+=12)s+=lineFull(A,polar(A,10,k),'dash');
+    const on=Math.abs((S.th%180)-tgt)<0.01;
+    s+=lineFull(A,polar(A,10,S.th),on?'ray pen':'ray');
+    s+=`<circle class="vtx" cx="${A.x}" cy="${A.y}" r="6"/>`+T({x:A.x-18,y:A.y+22},'A','lbl');
+    s+=`<circle cx="${B.x}" cy="${B.y}" r="${on?10:7}" style="fill:${on?'var(--ok)':'var(--ink)'}"/>`+T({x:B.x+18,y:B.y-20},'B','lbl');
+    s+=hdl('h',polar(A,160,S.th),'Doğruyu döndür');api.draw(s);
+    api.info(head('A\'dan geçen doğru',on?'B\'den de geçiyor!':'B\'den geçmiyor',on?'Tek bir doğru':'Döndürmeye devam',on?'A ve B\'den geçen yalnızca bu doğru var. Biraz döndürünce B\'yi kaçırırsın.':'Doğru A etrafında dönerken B\'den yalnızca tek bir konumda geçer.',on?'good':'')+
+      stats(stat('A\'dan geçen doğru','Sonsuz'),stat('A ve B\'den geçen','1 tane')));
+    if(user){if(on)api.done('tek');if(what==='fan'&&S.fan)api.done('fan');}}
+  api.drag((id,p)=>{const a=dirDeg(A,p);const t=a%180;const base=a>=180?180:0;S.th=Math.abs(t-tgt)<2.5?base+tgt:Math.round(a);render(true);});
+  render(false);}}
+]});
+
+/* ---------- Açılar 5 ---------- */
+function protractorLab(keys){return function(api){
+  const O={x:320,y:230},R=180,S={th:50};
+  api.hint('B noktasını açıölçerin etrafında döndür.');
+  [45,90,135,180].forEach(v=>api.button(v+'°',()=>{S.th=v;render(true);}));
+  const sl=api.slider({label:'Açı ölçüsü',min:0,max:360,step:1,value:S.th,fmt:v=>Math.round(v)+'°',onInput:v=>{S.th=Math.round(v);render(true);}});
+  function type(t){if(t===0)return ['Sıfır açı','İki kol üst üste.'];if(t<90)return ['Dar açı','Ölçüsü 0° ile 90° arasında.'];if(t===90)return ['Dik açı','Tam 90°. Köşesine küçük bir kare çizilir.'];if(t<180)return ['Geniş açı','Ölçüsü 90° ile 180° arasında.'];if(t===180)return ['Doğru açı','Kollar zıt yönde, bir doğru oluşturur.'];if(t<360)return ['180°\'den büyük açı','Doğru açıdan büyük, tam açıdan küçük.'];return ['Tam açı','Bir tam tur: 360°.'];}
+  function render(user){const th=S.th;let s=grid();s+=`<circle class="ring" cx="${O.x}" cy="${O.y}" r="${R}"/>`;
+    for(let d=0;d<360;d+=5){const big=d%30===0,md=d%10===0,p1=polar(O,R-(big?14:md?9:5),d),p2=polar(O,R,d);s+=`<line class="tick${big?' big':''}" x1="${f(p1.x)}" y1="${f(p1.y)}" x2="${f(p2.x)}" y2="${f(p2.y)}"/>`;if(big)s+=T(polar(O,R+17,d),d,'tickl');}
+    if(th===90)s+=`<path class="sec" style="stroke:none" d="${sector(O,30,0,90)}"/>`+rightMark(O,0,30);else if(th>0)s+=`<path class="sec" d="${sector(O,th>180?52:62,0,th)}"/>`;
+    const Ap=polar(O,R,0),Bp=polar(O,R,th);s+=L(O,Ap)+L(O,Bp);
+    s+=`<circle class="vtx" cx="${O.x}" cy="${O.y}" r="5"/>`+T({x:O.x-16,y:O.y+20},'O','lbl')+T({x:Ap.x-14,y:Ap.y+22},'A','lbl')+T(polar(polar(O,R-30,th),18,th+90),'B','lbl');
+    if(th>0&&th<360)s+=T(polar(O,th<25?118:96,th/2),th+'°','val');
+    s+=hdl('b',Bp,'B noktasını sürükle');api.draw(s);sl.set(th);
+    const [nm,ds]=type(th);
+    api.info(head('Ölçüm',`m(∠AOB) = ${th}°`,nm,ds)+stats(stat('Tümleri',th>0&&th<90?(90-th)+'°':'—',th>0&&th<90?`${th}° + ${90-th}° = 90°`:'Yalnız dar açıların tümleri olur.'),stat('Bütünleri',th>0&&th<180?(180-th)+'°':'—',th>0&&th<180?`${th}° + ${180-th}° = 180°`:'180°\'den küçük açılar için.')));
+    if(user&&keys){if(th>0&&th<90)api.done(keys.dar);if(th===90)api.done(keys.dik);if(th>90&&th<180)api.done(keys.genis);if(th===180)api.done(keys.dogru);}}
+  api.drag((id,p)=>{let t=Math.round(dirDeg(O,p));if(t===360&&S.th<180)t=0;if(t===0&&S.th>300)t=360;S.th=t;render(true);});
+  render(false);};}
+
+reg({id:'a5',g:5,sub:'Açılar',title:'Açı Avcıları',
+icon:'<path class="if" d="M18 96L64 96A46 46 0 0 0 50.5 63.5Z"/><path class="is" d="M18 96H108M18 96L84 30"/><circle class="idot" cx="18" cy="96" r="5"/>',
+tasks:[{k:'dar',text:'Bir dar açı oluştur',lab:0},{k:'dik',text:'Tam 90° dik açı oluştur',lab:0},{k:'genis',text:'Bir geniş açı oluştur',lab:0},{k:'dogru',text:'Doğru açı oluştur',lab:0},
+ {k:'tum45',text:'Dik açıyı iki eş tümler açıya böl',lab:1,hint:'İkisi de 45° olmalı.'},{k:'but120',text:'Bütünler açılardan biri 120° olsun',lab:1}],
+labs:[
+{name:'Açıölçer',note:'Açıyı kolların uzunluğu değil, aralarındaki açıklık belirler. Kolları ne kadar uzatsan da ölçü değişmez.',init:protractorLab({dar:'dar',dik:'dik',genis:'genis',dogru:'dogru'})},
+{name:'Tümler ve Bütünler',why:true,note:'Tümler açılar bir dik açıyı, bütünler açılar bir doğru açıyı paylaşır. Bir parça büyüdükçe öbürü aynı miktarda küçülür.',
+init(api){
+  const S={tot:90,x:35};
+  api.hint('Aradaki kırmızı noktayı sürükle.');
+  api.seg([['90','Dik açıyı böl (90°)'],['180','Doğru açıyı böl (180°)']],'90',v=>{S.tot=+v;S.x=Math.min(S.x,S.tot-1);sl.input.max=S.tot-1;render(true);});
+  const sl=api.slider({label:'Birinci açı',min:1,max:89,step:1,value:S.x,fmt:v=>Math.round(v)+'°',onInput:v=>{S.x=Math.round(v);render(true);}});
+  function render(user){const tot=S.tot,x=S.x,y=tot-x;const O=tot===90?{x:200,y:380}:{x:320,y:350};const R=tot===90?300:250,r=tot===90?110:100;
+    let s=grid();s+=`<path class="fsec cA" d="${sector(O,r,0,x)}"/><path class="fsec cB" d="${sector(O,r,x,tot)}"/>`;
+    s+=L(O,polar(O,R,0))+L(O,polar(O,R,tot))+L(O,polar(O,R*0.9,x),'ray pen');
+    if(tot===180)s+=L(O,polar(O,R,180));
+    s+=T(polar(O,r+(x<20?52:30),x/2),x+'°','val')+T(polar(O,r+(y<20?52:30),x+y/2),y+'°','val');
+    s+=`<circle class="vtx" cx="${O.x}" cy="${O.y}" r="5"/>`+hdl('m',polar(O,R*0.9,x),'Ortadaki kolu sürükle');api.draw(s);sl.set(x);
+    api.info(head(tot===90?'Tümler açılar':'Bütünler açılar',`${x}° + ${y}° = ${tot}°`,tot===90?'Toplamları 90°':'Toplamları 180°',`${x}° açısının ${tot===90?'tümleri':'bütünleri'} ${y}°. Kol hareket edince toplam hiç değişmiyor.`)+stats(stat('Sarı açı',x+'°'),stat('Pembe açı',y+'°')));
+    if(user){if(tot===90&&x===45)api.done('tum45');if(tot===180&&(x===120||y===120))api.done('but120');}}
+  api.drag((id,p)=>{const O=S.tot===90?{x:200,y:380}:{x:320,y:350};let a=dirDeg(O,p);if(a>270)a=0;S.x=clamp(Math.round(a),1,S.tot-1);render(true);});
+  render(false);}}
+]});
+
+/* ---------- Çokgenler 5 ---------- */
+const QUIZ5=[
+ {n:'Kare',ok:true,why:'Dört doğru parçasından oluşan kapalı bir şekil.',d:'M210 110H430V330H210Z'},
+ {n:'Daire',ok:false,why:'Kenarları doğru parçası değil, eğri bir çizgi.',d:'M320 100A120 120 0 1 1 319.9 100Z'},
+ {n:'Açık çizgi',ok:false,why:'Kapalı değil: başladığı yere dönmüyor.',d:'M170 320L260 140L360 300L470 120',open:true},
+ {n:'Yıldız',ok:true,why:'10 kenarlı içbükey bir çokgen. İçe dönük köşeleri olabilir.',d:pd([0,1,2,3,4,5,6,7,8,9].map(i=>polar({x:320,y:230},i%2?55:130,90+36*i)))},
+ {n:'Kelebek',ok:false,why:'Kenarlar birbirini kesiyor; çokgende kenarlar kesişmez.',d:'M190 120L450 320L450 120L190 320Z'},
+ {n:'Üçgen',ok:true,why:'Üç doğru parçasıyla kapanan en az kenarlı çokgen.',d:'M180 330L460 330L300 110Z'},
+ {n:'Yarım daire',ok:false,why:'Bir kenarı eğri; çokgenin tüm kenarları doğru parçasıdır.',d:'M190 290A130 130 0 0 1 450 290Z'},
+ {n:'L şekli',ok:true,why:'6 kenarlı bir çokgen (altıgen), içbükey.',d:'M220 100H300V260H440V340H220Z'}];
+reg({id:'c5',g:5,sub:'Çokgenler',title:'Kenar Köşe Kulübü',
+icon:'<path class="if" d="M60 14L106 47L88 102H32L14 47Z"/><circle class="idot" cx="60" cy="14" r="6"/><circle class="idot" cx="106" cy="47" r="6"/><circle class="idot" cx="88" cy="102" r="6"/><circle class="idot" cx="32" cy="102" r="6"/><circle class="idot" cx="14" cy="47" r="6"/>',
+tasks:[{k:'altigen',text:'Bir altıgen oluştur',lab:0},{k:'icbukey',text:'Bir köşeyi içeri iterek içbükey çokgen yap',lab:0},{k:'quiz',text:'"Çokgen mi?" testinde en az 7 doğru yap',lab:1}],
+labs:[
+{name:'Çokgen Yap',note:'Çokgende kenar sayısı = köşe sayısı = iç açı sayısı. Adını da kenar sayısından alır: 5 kenar → beşgen.',
+init(api){
+  const S={n:5,P:[]};const C={x:320,y:225};
+  function regular(){S.P=[];for(let i=0;i<S.n;i++)S.P.push(polar(C,155,90+360*i/S.n));S.P=S.P.map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));}
+  api.hint('Kenar sayısını seç, köşeleri sürükle.');
+  api.slider({label:'Kenar sayısı',min:3,max:10,step:1,value:S.n,fmt:v=>Math.round(v),onInput:v=>{S.n=Math.round(v);regular();render(true);}});
+  api.button('Düzgün yap',()=>{regular();render(false);});
+  function render(user){const P=S.P,n=P.length,bad=selfX(P);const ang=bad?[]:polyAngles(P);const conc=!bad&&ang.some(a=>a>180.5);
+    let s=grid()+`<path class="fpoly ${bad?'cB':'cD'} soft" d="${pd(P)}"/>`;
+    P.forEach((p,i)=>{const q=P[(i+1)%n],m=mid(p,q);s+=`<circle cx="${f(m.x)}" cy="${f(m.y)}" r="12" class="cP" style="stroke:var(--ink-soft);stroke-width:1.5"/>`+T(m,i+1,'sml');});
+    P.forEach((p,i)=>{const d=sub(p,C),dl=len(d)||1;s+=T({x:p.x+d.x/dl*26,y:p.y+d.y/dl*26},String.fromCharCode(65+i),'lbl');});
+    s+=P.map((p,i)=>hdl('v'+i,p,String.fromCharCode(65+i)+' köşesi')).join('');api.draw(s);
+    if(bad)api.info(head('Durum','Çokgen değil!','Kenarlar kesişiyor','Bir çokgenin kenarları birbirini kesmez. Bir köşeyi geri çek.','warn'));
+    else api.info(head('Bu şeklin adı',PL[n][0].toUpperCase()+PL[n].slice(1),conc?'İçbükey çokgen':'Dışbükey çokgen',conc?'En az bir köşesi içeri dönük.':'Tüm köşeleri dışarı bakıyor.')+stats(stat('Kenar',n),stat('Köşe',n),stat('İç açı',n))+`<p class="desc">Kenarları numaralı: 1'den ${n}'e kadar say. Köşeler A'dan ${String.fromCharCode(64+n)}'ye.</p>`);
+    if(user&&!bad){if(n===6)api.done('altigen');if(conc)api.done('icbukey');}}
+  api.drag((id,p)=>{const i=+id.slice(1);S.P[i]={x:clamp(Math.round(p.x),20,W-20),y:clamp(Math.round(p.y),20,HT-20)};render(true);});
+  regular();render(false);}},
+{name:'Çokgen mi, Değil mi?',note:'Çokgen: yalnızca doğru parçalarından oluşan, kapalı ve kenarları birbirini kesmeyen şekildir.',
+init(api){
+  const S={i:0,score:0,ans:null};
+  api.hint('Şekle bak, kararını ver.');
+  const by=api.button('Çokgen',()=>answer(true)),bn=api.button('Çokgen değil',()=>answer(false)),nx=api.button('Sıradaki →',()=>next(),{primary:true});
+  function next(){if(S.ans===null)return;S.i++;S.ans=null;if(S.i>=QUIZ5.length){end();return;}render();}
+  function answer(v){if(S.ans!==null)return;S.ans=v;if(v===QUIZ5[S.i].ok)S.score++;render();}
+  function end(){by.hidden=bn.hidden=true;nx.innerHTML='Baştan başla';nx.onclick=()=>{S.i=0;S.score=0;S.ans=null;by.hidden=bn.hidden=false;nx.innerHTML='Sıradaki →';nx.onclick=()=>next();render();};
+    api.draw(grid()+T({x:320,y:200},`${S.score} / ${QUIZ5.length}`,'lbl').replace('class="lbl"','class="lbl" style="font-size:64px"')+T({x:320,y:270},'doğru cevap','ttl'));
+    api.info(head('Sonuç',`${S.score} / ${QUIZ5.length}`,S.score>=7?'Çokgen uzmanı!':'Bir daha dene',S.score>=7?'Çokgenin üç şartını iyi biliyorsun.':'İpucu: doğru parçası, kapalı, kesişmeyen kenarlar.',S.score>=7?'good':''));
+    if(S.score>=7)api.done('quiz');}
+  function render(){const q=QUIZ5[S.i];let s=grid()+`<path class="qshape" d="${q.d}" ${q.open?'style="fill:none"':''}/>`+T({x:320,y:400},`Soru ${S.i+1} / ${QUIZ5.length}`,'sml');api.draw(s);
+    nx.disabled=S.ans===null;
+    if(S.ans===null)api.info(head('Soru '+(S.i+1),'Bu bir çokgen mi?',null,'Şartlar: yalnızca doğru parçaları, kapalı şekil, kenarlar birbirini kesmez.')+stats(stat('Doğru',S.score),stat('Kalan',QUIZ5.length-S.i)));
+    else{const ok=S.ans===q.ok;api.info(head(q.n,ok?'Doğru!':'Yanlış',q.ok?'Çokgen':'Çokgen değil',q.why,ok?'good':'warn')+stats(stat('Doğru',S.score),stat('Kalan',QUIZ5.length-S.i-1)));}}
+  render();}}
+]});
+
+/* ---------- Üçgenler ve dörtgenler ---------- */
+function triLab(keys,o){o=o||{};return function(api){
+  const P=cp(o.P||{A:{x:160,y:360},B:{x:520,y:360},C:{x:280,y:120}});const S={snap:true};
+  api.hint('A, B, C köşelerini sürükle.');
+  api.check('Kareli kâğıda oturt',true,v=>{S.snap=v;});
+  api.button('Başa dön',()=>{Object.assign(P,cp(o.P||{A:{x:160,y:360},B:{x:520,y:360},C:{x:280,y:120}}));render(false);});
+  function render(user){const st=triState(P);api.draw(grid()+triDraw(P,st)+triHandles(P));
+    if(st.degen)api.info(degenInfo());
+    else api.info(`<p class="eyebrow">İç açılar</p>`+triAngInfo(st)+`<div class="tags"><span class="tag">Kenarlarına göre<br><b>${st.bySide}</b></span><span class="tag">Açılarına göre<br><b>${st.byAng}</b></span></div><div class="tags"><span class="tag">|AB| <b>${tr(st.sc/U)}</b></span><span class="tag">|BC| <b>${tr(st.sa/U)}</b></span><span class="tag">|CA| <b>${tr(st.sb/U)}</b></span><span class="tag">1 kare = 1 br</span></div>`);
+    if(user&&!st.degen&&keys){if(st.byAng==='Dik açılı')api.done(keys.dik);if(st.bySide!=='Çeşitkenar')api.done(keys.ikiz);if(st.byAng==='Geniş açılı')api.done(keys.genis);if(st.bySide==='Eşkenar')api.done(keys.eskenar);if(keys.dikiz&&st.byAng==='Dik açılı'&&st.bySide==='İkizkenar')api.done(keys.dikiz);}}
+  api.drag((id,p)=>{if(triMove(P,id,p,S.snap))render(true);});render(false);};}
+function quadLab(keys,diag){return function(api){
+  const Q0=[{x:160,y:340},{x:480,y:320},{x:440,y:120},{x:200,y:160}];let Q=cp(Q0);const S={snap:true};
+  api.hint('A, B, C, D köşelerini sürükle.');
+  api.check('Kareli kâğıda oturt',true,v=>{S.snap=v;});
+  api.button('Başa dön',()=>{Q=cp(Q0);render(false);});
+  function render(user){const st=quadState(Q);api.draw(grid()+quadDraw(Q,st,{diag}));api.info(quadInfo(st,diag));
+    if(user&&keys&&!st.bad){const m={Kare:keys.kare,Dikdörtgen:keys.dikd,'Eşkenar dörtgen':keys.esk,Paralelkenar:keys.par,Yamuk:keys.yamuk,Deltoid:keys.del}[st.name];if(m)api.done(m);}}
+  api.drag((id,p)=>{if(quadMove(Q,id,p,S.snap))render(true);});render(false);};}
+function tearLab(key){return function(api){
+  const P={A:{x:140,y:290},B:{x:500,y:290},C:{x:300,y:80}};const S={t:0};const Q={x:320,y:400};
+  api.hint('Köşeleri sürükle, sonra Oynat\'a bas.');
+  const sl=api.slider({label:'Köşeleri yırt',min:0,max:1,step:0.001,value:0,play:true,dur:3200,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const st=triState(P);let s=grid();const k=ease(S.t);
+    if(st.degen){api.draw(s+`<path class="tri" d="${pd([P.A,P.B,P.C])}"/>`+triHandles(P));api.info(degenInfo());return;}
+    s+=`<path class="${S.t>0?'ghost':'tri'}" d="${pd([P.A,P.B,P.C])}"/>`;
+    const V=[P.A,P.B,P.C],cl=['cA','cB','cC'],a=st.raw;const tgt=[180-a[0],180-a[0]-a[1],0];
+    if(S.t>0.98)s+=L({x:Q.x-150,y:Q.y},{x:Q.x+150,y:Q.y},'ray thin');
+    V.forEach((v,i)=>{const w=wedge(v,V[(i+1)%3],V[(i+2)%3]);if(S.t>0)s+=`<path class="fsec ${cl[i]}" style="fill-opacity:.18;stroke-dasharray:4 4" d="${sector(v,46,w.s,w.s+w.d)}"/>`;
+      const delta=((tgt[i]-w.s+540)%360)-180;const c=lerpP(v,Q,k),st0=w.s+delta*k;
+      s+=`<path class="fsec ${cl[i]}" d="${sector(c,46,st0,st0+w.d)}"/>`+T(polar(c,70,st0+w.d/2),st.ang[i]+'°','val');});
+    V.forEach((v,i)=>{const G={x:(P.A.x+P.B.x+P.C.x)/3,y:(P.A.y+P.B.y+P.C.y)/3},d=sub(v,G),dl=len(d)||1;s+=T({x:v.x+d.x/dl*28,y:v.y+d.y/dl*28},'ABC'[i],'lbl');});
+    if(S.t>0.98)s+=T({x:Q.x,y:Q.y+24},'Doğru açı = 180°','ttl');
+    if(S.t===0)s+=triHandles(P);api.draw(s);
+    api.info(head('Üç köşeyi yan yana koy',S.t>0.98?'Doğru açı oluştu!':'Köşeler yolda…',null,'Kâğıttan bir üçgenin köşelerini yırtıp yan yana koyarsan her zaman düz bir çizgi oluşur.')+triAngInfo(st));
+    if(user&&S.t>0.99&&key)api.done(key);}
+  api.drag((id,p)=>{if(S.t>0)return;if(triMove(P,id,p,true,[60,60,580,300]))render(false);});render(false);};}
+
+reg({id:'u5',g:5,sub:'Üçgenler ve Dörtgenler',title:'Şekil Ailesi',
+icon:'<path class="if" d="M12 100L62 100L37 54Z"/><rect class="if2" x="58" y="34" width="50" height="50" rx="2" transform="rotate(8 83 59)"/>',
+tasks:[{k:'dik',text:'Bir dik üçgen oluştur',lab:0},{k:'ikiz',text:'Bir ikizkenar üçgen oluştur',lab:0},{k:'eskenar',text:'Eşkenar üçgen oluştur',lab:0,hint:'Yapıştırmayı kapat, açılar 60° olsun'},
+ {k:'kare',text:'Bir kare oluştur',lab:1},{k:'par',text:'Bir paralelkenar oluştur',lab:1},{k:'yamuk',text:'Bir yamuk oluştur',lab:1},{k:'yirt',text:'Üçgenin köşelerini yırtıp yan yana diz',lab:2}],
+labs:[
+{name:'Üçgen Laboratuvarı',note:'Üçgenler iki şekilde sınıflanır. Kenarlarına göre: eşkenar, ikizkenar, çeşitkenar. Açılarına göre: dar, dik, geniş açılı.',init:triLab({dik:'dik',ikiz:'ikiz',eskenar:'eskenar'})},
+{name:'Dörtgen Ailesi',note:'Kare hem dikdörtgendir hem eşkenar dörtgendir. Dikdörtgen de bir paralelkenardır. Özel dörtgenler büyük bir ailenin üyeleridir.',init:quadLab({kare:'kare',par:'par',yamuk:'yamuk'},false)},
+{name:'Neden 180°?',why:true,note:'Üçgen nasıl olursa olsun, üç köşesini yan yana koyunca bir doğru açı oluşur. Bu yüzden iç açıların toplamı her zaman 180°.',init:tearLab('yirt')}
+]});
+
+/* ---------- Çember ---------- */
+reg({id:'cm5',g:5,sub:'Çember ve Daire',title:'Pergelin Sırrı',
+icon:'<circle class="if" cx="60" cy="60" r="44"/><path class="is" d="M60 60L104 60"/><path class="is" d="M60 60L29 29" style="stroke-dasharray:6 7"/><circle class="idot" cx="60" cy="60" r="6"/>',
+tasks:[{k:'r3',text:'Yarıçapı 3 br olan bir çember çiz',lab:0},{k:'cap8',text:'Çapı 8 br olan bir çember çiz',lab:0},{k:'daire',text:'Daire görünümüne geç',lab:0},{k:'ciz',text:'Pergelle tam bir çember çiz',lab:1}],
+labs:[
+{name:'Merkez, Yarıçap, Çap',note:'Çemberdeki her nokta merkeze aynı uzaklıktadır; bu uzaklık yarıçaptır. Çap iki yarıçaptan oluşur: çap = 2 × yarıçap.',
+init(api){
+  const S={O:{x:320,y:220},R:{x:440,y:220},pa:125,disk:false};
+  api.hint('Merkezi (O), yarıçap ucunu (R) ve çemberdeki P noktasını sürükle.');
+  api.seg([['c','Çember'],['d','Daire']],'c',v=>{S.disk=v==='d';render(true);});
+  function render(user){const {O,R}=S,r=dist(O,R),P=polar(O,r,S.pa),R2={x:2*O.x-R.x,y:2*O.y-R.y};let s=grid();
+    s+=`<circle cx="${O.x}" cy="${O.y}" r="${f(r)}" class="${S.disk?'cA':''}" style="${S.disk?'fill-opacity:.4;':'fill:none;'}stroke:var(--ink);stroke-width:3.5"/>`;
+    s+=L(R2,R,'dash')+L(O,R,'ray pen')+L(O,P,'ray thin');
+    const rm=mid(O,R),n=dirDeg(O,R);s+=T(polar(rm,16,n+90),'r','lbl')+T(polar(mid(O,R2),16,n+90),'r','sml');
+    s+=`<circle class="vtx" cx="${O.x}" cy="${O.y}" r="6"/>`+T({x:O.x-14,y:O.y+20},'O','lbl')+T(polar(P,22,S.pa),'P','lbl')+T(polar(R,22,n),'R','lbl');
+    s+=hdl('O',O,'Merkez')+hdl('R',R,'Yarıçap ucu')+hdl('P',P,'Çemberdeki nokta');api.draw(s);
+    api.info(head(S.disk?'Daire':'Çember',`r = ${tr(r/U)} br`,`Çap = ${tr(2*r/U)} br`,S.disk?'Daire, çemberin kendisi ve içindeki bölgedir.':'Çember yalnızca sınır çizgisidir; içi boştur.')+stats(stat('|OR| yarıçap',tr(r/U)+' br'),stat('|OP|',tr(r/U)+' br','P nereye giderse gitsin aynı!'))+`<p class="eqn">çap = 2 × ${tr(r/U)} = ${tr(2*r/U)} br</p>`);
+    if(user){if(Math.abs(r-3*U)<0.5)api.done('r3');if(Math.abs(r-4*U)<0.5)api.done('cap8');if(S.disk)api.done('daire');}}
+  api.drag((id,p)=>{if(id==='P'){S.pa=dirDeg(S.O,p);render(true);return;}
+    const x=clamp(snapv(p.x),U,W-U),y=clamp(snapv(p.y),U,HT-U);
+    if(id==='O'){const d=sub(S.R,S.O);S.O={x,y};S.R={x:x+d.x,y:y+d.y};}else{if(x===S.O.x&&y===S.O.y)return;S.R={x,y};}render(true);});
+  render(false);}},
+{name:'Pergelle Çiz',why:true,note:'Pergelin iki kolu arasındaki açıklık hiç değişmez. Bu yüzden kalem, merkeze hep aynı uzaklıkta kalarak döner ve çember çizer.',
+init(api){
+  const O={x:320,y:240},S={r:3,t:0};
+  api.hint('Pergel açıklığını seç, Oynat\'a bas.');
+  api.slider({label:'Açıklık (r)',min:1,max:4.5,step:0.5,value:3,fmt:v=>tr(v)+' br',onInput:v=>{S.r=v;S.t=0;sl.set(0);render(false);}});
+  const sl=api.slider({label:'Çizim',min:0,max:1,step:0.001,value:0,play:true,dur:3500,fmt:v=>Math.round(v*360)+'°',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const r=S.r*U,th=S.t*360,P=polar(O,r,th);let s=grid();
+    s+=`<circle cx="${O.x}" cy="${O.y}" r="${r}" class="ring"/>`;
+    if(th>0)s+=`<path class="ray pen" d="${arc(O,r,0,th)}"/>`;
+    for(let a=0;a<=th-1;a+=45){const q=polar(O,r,a);s+=L(O,q,'dash')+`<circle class="vtx" cx="${f(q.x)}" cy="${f(q.y)}" r="4"/>`;}
+    const m=mid(O,P),v=sub(P,O),vl=len(v)||1;let nn={x:-v.y/vl,y:v.x/vl};if(nn.y>0)nn={x:-nn.x,y:-nn.y};const Lg=Math.max(r*0.7,120),hgt=Math.sqrt(Math.max(Lg*Lg-(r/2)*(r/2),400));const K={x:m.x+nn.x*hgt,y:m.y+nn.y*hgt};
+    s+=`<line x1="${f(K.x)}" y1="${f(K.y)}" x2="${O.x}" y2="${O.y}" style="stroke:var(--ink-soft);stroke-width:7;stroke-linecap:round"/><line x1="${f(K.x)}" y1="${f(K.y)}" x2="${f(P.x)}" y2="${f(P.y)}" style="stroke:var(--hl4);stroke-width:7;stroke-linecap:round"/>`;
+    s+=`<circle cx="${f(K.x)}" cy="${f(K.y)}" r="9" class="kpt"/><circle cx="${f(P.x)}" cy="${f(P.y)}" r="5" style="fill:var(--pen)"/><circle class="vtx" cx="${O.x}" cy="${O.y}" r="5"/>`+T({x:O.x-14,y:O.y+20},'O','lbl');
+    api.draw(s);
+    api.info(head('Pergel açıklığı',`r = ${tr(S.r)} br`,S.t>0.999?'Çember tamam':'Çiziliyor…','Kesikli çizgilerin hepsi aynı uzunlukta: hepsi yarıçap.')+stats(stat('Dönülen açı',Math.round(th)+'°'),stat('Merkeze uzaklık',tr(S.r)+' br','her an aynı')));
+    if(user&&S.t>0.999)api.done('ciz');}
+  render(false);}}
+]});
+
+/* ---------- Geometrik cisimler 5 ---------- */
+reg({id:'p5',g:5,sub:'Geometrik Cisimler',title:'Kutu Atölyesi',
+icon:'<path class="if" d="M18 40L60 20L102 40L102 86L60 106L18 86Z"/><path class="is" d="M18 40L60 60L102 40M60 60V106"/>',
+tasks:[{k:'ucgen',text:'Üçgen prizmayı incele',lab:0},{k:'kup',text:'Bir küp oluştur',lab:0,hint:'Kare prizmada yükseklik = taban kenarı'},{k:'euler',text:'3 farklı prizmanın yüz, köşe, ayrıt sayılarını karşılaştır',lab:0},{k:'ac',text:'Kutuyu tamamen aç',lab:1},{k:'kupac',text:'Bir küpün açınımını gör',lab:1}],
+labs:[
+{name:'Prizma Gezgini',note:'Her prizmada: yüz + köşe − ayrıt = 2. Tabanı n kenarlı ise n + 2 yüzü, 2n köşesi, 3n ayrıtı vardır.',
+init(api){
+  const S={n:4,a:2,h:3,mode:'y'},seen=new Set(),cam=cam3({s:62,cy:225});
+  api.hint('Döndürmek için çizim alanında sürükle.');
+  api.seg([['y','Yüzler'],['a','Ayrıtlar'],['k','Köşeler']],'y',v=>{S.mode=v;render(false);});
+  api.slider({label:'Taban kenar sayısı',min:3,max:8,step:1,value:4,fmt:v=>Math.round(v),onInput:v=>{S.n=Math.round(v);render(true);}});
+  api.slider({label:'Taban kenarı',min:1,max:3,step:0.5,value:2,fmt:v=>tr(v)+' br',onInput:v=>{S.a=v;render(true);}});
+  api.slider({label:'Yükseklik',min:1,max:4,step:0.5,value:3,fmt:v=>tr(v)+' br',onInput:v=>{S.h=v;render(true);}});
+  api.orbit(cam,()=>render(false));
+  function render(user){const {n,a,h}=S;const F=prismFaces(n,a,h,'cA','cB');
+    if(S.mode==='y'){const cls=['cA','cC','cD'];F.forEach((fc,i)=>{if(i>=2)fc.k=cls[(i-2)%3];});}
+    let s=plain()+convex3(F,cam,{});
+    const R=a/(2*Math.sin(PI/n)),off=PI/2+PI/n,b=ngon3(n,R,-h/2,off),t=ngon3(n,R,h/2,off);
+    if(S.mode==='a'){for(let i=0;i<n;i++){const j=(i+1)%n;[[b[i],b[j]],[t[i],t[j]],[b[i],t[i]]].forEach(([p,q])=>{s+=L(P3(p,cam),P3(q,cam),'e3');});}}
+    if(S.mode==='k'){b.concat(t).forEach((p,i)=>{const q=P3(p,cam);s+=`<circle cx="${f(q.x)}" cy="${f(q.y)}" r="11" style="fill:var(--pen);stroke:var(--sheet);stroke-width:2"/>`+`<text x="${f(q.x)}" y="${f(q.y)}" text-anchor="middle" dominant-baseline="central" style="fill:#fff;font:900 11px var(--body)">${i+1}</text>`;});}
+    api.draw(s);
+    const name=n===4?(a===h?'Küp':'Kare prizma'):PL[n][0].toUpperCase()+PL[n].slice(1)+' prizma';
+    seen.add(n);
+    api.info(head('Cismin adı',name,null,`İki tabanı eş ${PL[n]}, yan yüzleri dikdörtgen.`)+stats(stat('Yüz',n+2),stat('Köşe',2*n),stat('Ayrıt',3*n))+`<p class="eqn">${n+2} + ${2*n} − ${3*n} = 2<small>yüz + köşe − ayrıt</small></p>`);
+    if(user){if(n===3)api.done('ucgen');if(n===4&&a===h)api.done('kup');if(seen.size>=3)api.done('euler');}}
+  render(false);}},
+{name:'Kutuyu Aç',why:true,note:'Bir dikdörtgenler prizmasını açınca 6 dikdörtgen çıkar. Karşılıklı yüzler eştir: alt-üst, ön-arka, sağ-sol.',
+init(api){
+  const S={a:3,b:2,c:2,t:0},cam=cam3({s:36,cy:250,pitch:0.5});
+  api.hint('Oynat\'a bas ya da kaydırıcıyı çek. Döndürmek için sürükle.');
+  api.slider({label:'En',min:1,max:4,step:1,value:3,fmt:v=>v+' br',onInput:v=>{S.a=v;render(true);}});
+  api.slider({label:'Boy',min:1,max:4,step:1,value:2,fmt:v=>v+' br',onInput:v=>{S.b=v;render(true);}});
+  api.slider({label:'Yükseklik',min:1,max:4,step:1,value:2,fmt:v=>v+' br',onInput:v=>{S.c=v;render(true);}});
+  api.slider({label:'Aç',min:0,max:1,step:0.001,value:0,play:true,dur:3000,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  api.orbit(cam,()=>render(false));
+  function render(user){const k=ease(S.t);const c2=netCam(cam,S.a,S.b,S.c,k);
+    const F=netFaces(S.a,S.b,S.c,k);if(S.t>0.98)F.forEach(fc=>fc.lab=fc.n);
+    api.draw(plain()+painter3(F,c2));
+    const cube=S.a===S.b&&S.b===S.c;
+    api.info(head('Dikdörtgenler prizması',S.t>0.98?'Açınım hazır':'Açılıyor…',cube?'Küp':null,'Kutuyu kesip düzleme yaydık. Aynı renkteki yüzler birbirine eş.')+`<ul class="rows"><li><i class="sw cA"></i>Alt ve üst<b>${S.a} × ${S.b}</b></li><li><i class="sw cB"></i>Ön ve arka<b>${S.a} × ${S.c}</b></li><li><i class="sw cC"></i>Sağ ve sol<b>${S.b} × ${S.c}</b></li></ul>`);
+    if(user&&S.t>0.99){api.done('ac');if(cube)api.done('kupac');}}
+  render(false);}}
+]});
+
+/* ======================= 6. SINIF ======================= */
+
+/* ---------- Açılar 6 ---------- */
+reg({id:'a6',g:6,sub:'Açılar',title:'Kesişme Noktası',
+icon:'<path class="if" d="M60 60L102 60A42 42 0 0 0 89.7 30.3Z"/><path class="if" d="M60 60L18 60A42 42 0 0 0 30.3 89.7Z"/><path class="is" d="M8 60H112M22 98L98 22"/>',
+tasks:[{k:'ters',text:'Bir açıya dokun, ters açısının eşit olduğunu gör',lab:0},{k:'dik',text:'İki doğruyu dik kesiştir',lab:0},
+ {k:'kdik',text:'Keseni paralel doğrulara dik yap',lab:1},{k:'ic',text:'3 numaralı açıya dokun, iç ters eşini bul',lab:1},{k:'yon',text:'7 numaralı açıya dokun, yöndeşini bul',lab:1}],
+labs:[
+{name:'Ters ve Komşu Açılar',why:true,note:'Ters açılar neden eşit? ∠1 ile ∠2 bütünler, ∠2 ile ∠3 de bütünler. İkisi de 180°\'yi ∠2 ile tamamlıyorsa ∠1 = ∠3 olmak zorunda.',
+init(api){
+  const O={x:320,y:220},S={a1:20,a2:115,sel:0};
+  api.hint('Doğruları kırmızı noktalardan döndür, açılara dokun.');
+  function render(clicked){let a1=S.a1,a2=S.a2;if(a1>a2){const t=a1;a1=a2;a2=t;}const x=a2-a1;
+    const st=[a1,a2,a1+180,a2+180],en=[a2,a1+180,a2+180,a1+360],val=[x,180-x,x,180-x];
+    let s=grid()+lineFull(O,polar(O,10,S.a1))+lineFull(O,polar(O,10,S.a2));
+    for(let i=0;i<4;i++){let c='';if(i===S.sel)c=' sel';else if(i%2===S.sel%2)c=' mate';s+=`<path class="ang ${i%2?'cB':'cA'}${c}" data-ang="${i}" tabindex="0" role="button" aria-label="${i+1} numaralı açı" d="${sector(O,60,st[i],en[i])}"/>`;}
+    for(let i=0;i<4;i++){const m=(st[i]+en[i])/2;s+=T(polar(O,36,m),i+1,'anum')+T(polar(O,84,m),val[i]+'°','val');}
+    s+=`<circle class="vtx" cx="${O.x}" cy="${O.y}" r="5"/>`+hdl('l1',polar(O,170,S.a1),'Birinci doğru')+hdl('l2',polar(O,170,S.a2),'İkinci doğru');api.draw(s);
+    const i=S.sel,j=(i+1)%4,k=(i+2)%4;
+    api.info(head('Seçili açı',`m(∠${i+1}) = ${val[i]}°`,null,`∠${k+1} onun ters açısı, ∠${j+1} ve ∠${(i+3)%4+1} komşu bütünleri.`)+
+      `<ul class="rel"><li class="eq"><b>∠${k+1}</b><span>Ters açılar</span><em>eşit</em></li><li class="sup"><b>∠${j+1}</b><span>Komşu bütünler</span><em>toplam 180°</em></li><li class="sup"><b>∠${(i+3)%4+1}</b><span>Komşu bütünler</span><em>toplam 180°</em></li></ul>`+
+      `<p class="eqn">∠${i+1} + ∠${j+1} = ${val[i]}° + ${val[j]}° = 180°<br>∠${j+1} + ∠${k+1} = ${val[j]}° + ${val[k]}° = 180°<small>İkisi de ∠${j+1} ile 180° ediyor, o halde ∠${i+1} = ∠${k+1}</small></p>`);
+    if(clicked)api.done('ters');if(x===90)api.done('dik');}
+  api.drag((id,p)=>{let a=Math.round(dirDeg(O,p))%180;const other=id==='l1'?S.a2:S.a1;if(Math.abs(a-other)<6||Math.abs(a-other)>174)return;if(id==='l1')S.a1=a;else S.a2=a;render(false);});
+  const pick=e=>{const a=e.target.closest('[data-ang]');if(!a)return;S.sel=+a.dataset.ang;render(true);};
+  api.svg.addEventListener('click',pick);api.svg.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e);}});
+  render(false);}},
+{name:'Paralel ve Kesen',note:'Paralel doğrular bir kesenle 8 açı oluşturur ama yalnızca iki farklı ölçü vardır. Aynı renkli açılar eşit, farklı renkliler bütünlerdir.',init:kesenLab({dik:'kdik',ic:'ic',yon:'yon'})}
+]});
+
+/* ---------- Alan ölçme ---------- */
+reg({id:'al6',g:6,sub:'Alan Ölçme',title:'Kes, Kaydır, Bul',
+icon:'<path class="if" d="M12 92L72 92L106 30L46 30Z"/><path class="is" d="M46 30V92" style="stroke-dasharray:6 7"/><path class="is" d="M46 82H56V92"/>',
+tasks:[{k:'kes',text:'Paralelkenarı kesip dikdörtgene çevir',lab:0},{k:'a24',text:'Alanı 24 br² olan eğik bir paralelkenar kur',lab:0},{k:'yarim',text:'Üçgeni kopyalayıp paralelkenar yap',lab:1},{k:'sabit',text:'Tepe noktasını 4 br kaydır, alanı izle',lab:2},{k:'disari',text:'Yüksekliğin üçgenin dışına düştüğü bir üçgen yap',lab:2}],
+labs:[
+{name:'Paralelkenardan Dikdörtgene',why:true,note:'Paralelkenarın bir ucundaki üçgeni kesip öbür uca taşıyınca dikdörtgen olur. Hiçbir parça eklenmedi ya da atılmadı, o yüzden alan = taban × yükseklik.',
+init(api){
+  const S={a:5,h:4,s:2,t:0},x0=80,yb=380;
+  api.hint('Üst sol köşeyi sürükleyerek eğ, sonra Oynat.');
+  api.slider({label:'Taban',min:2,max:7,step:1,value:5,fmt:v=>v+' br',onInput:v=>{S.a=v;S.s=Math.min(S.s,Math.min(S.a,12-S.a));render(true);}});
+  api.slider({label:'Yükseklik',min:1,max:7,step:1,value:4,fmt:v=>v+' br',onInput:v=>{S.h=v;render(true);}});
+  const tl=api.slider({label:'Kes ve taşı',min:0,max:1,step:0.001,value:0,play:true,dur:2600,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const a=S.a*U,h=S.h*U,s=S.s*U,k=ease(S.t);
+    const A={x:x0,y:yb},B={x:x0+a,y:yb},C={x:x0+a+s,y:yb-h},D={x:x0+s,y:yb-h};let g=grid();
+    g+=`<path class="ghost" d="${pd([A,B,C,D])}"/>`;
+    if(s>0){g+=poly([{x:x0+s,y:yb},B,C,D],'fpoly cA');const dx=a*k;g+=poly([{x:A.x+dx,y:yb},{x:x0+s+dx,y:yb},{x:D.x+dx,y:D.y}],'fpoly cB');}
+    else g+=poly([A,B,C,D],'fpoly cA');
+    g+=L({x:x0+s,y:yb},D,'dash')+rightMark({x:x0+s,y:yb},0,12);
+    g+=T({x:x0+a/2+(k>0.98?s:0),y:yb+22},`taban = ${S.a} br`,'sml')+T({x:x0+s-10,y:yb-h/2},`h = ${S.h}`,'sml','end');
+    if(S.t===0)g+=hdl('D',D,'Eğmek için sürükle');api.draw(g);
+    api.info(head(k>0.98?'Artık bir dikdörtgen':'Paralelkenar',`Alan = ${S.a} × ${S.h} = ${S.a*S.h} br²`,null,'Kareleri sayarak da kontrol edebilirsin: pembe parça, sağdaki boşluğu tam dolduruyor.')+stats(stat('Taban',S.a+' br'),stat('Yükseklik',S.h+' br','tabana dik uzaklık')));
+    if(user){if(S.t>0.99&&S.s>0)api.done('kes');if(S.a*S.h===24&&S.s>0)api.done('a24');}}
+  api.drag((id,p)=>{if(S.t>0)return;const smax=Math.min(S.a,12-S.a);const s=clamp(Math.round((p.x-x0)/U),0,smax);if(s!==S.s){S.s=s;render(true);}});
+  render(false);}},
+{name:'Üçgen = Yarım Paralelkenar',why:true,note:'İki eş üçgeni birleştirince paralelkenar oluşur. Demek ki üçgenin alanı, aynı taban ve yükseklikteki paralelkenarın yarısıdır: (taban × yükseklik) ÷ 2.',
+init(api){
+  const S={a:5,h:4,s:2,t:0},x0=100,yb=380;
+  api.hint('Tepe noktasını sürükle, sonra Oynat.');
+  api.slider({label:'Taban',min:2,max:6,step:1,value:5,fmt:v=>v+' br',onInput:v=>{S.a=v;S.s=Math.min(S.s,S.a);render(true);}});
+  api.slider({label:'Yükseklik',min:1,max:7,step:1,value:4,fmt:v=>v+' br',onInput:v=>{S.h=v;render(true);}});
+  api.slider({label:'Kopyayı döndür',min:0,max:1,step:0.001,value:0,play:true,dur:2600,fmt:v=>Math.round(v*180)+'°',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const a=S.a*U,h=S.h*U,k=ease(S.t);const A={x:x0,y:yb},B={x:x0+a,y:yb},C={x:x0+S.s*U,y:yb-h},M=mid(B,C),ph=PI*k;
+    const rot=p=>{const d=sub(p,M);return {x:M.x+d.x*Math.cos(ph)-d.y*Math.sin(ph),y:M.y+d.x*Math.sin(ph)+d.y*Math.cos(ph)};};
+    let g=grid();g+=poly([rot(A),rot(B),rot(C)],'fpoly cB'+(k===0?' soft':''));g+=poly([A,B,C],'fpoly cA');
+    g+=L(C,{x:C.x,y:yb},'dash')+rightMark({x:C.x,y:yb},0,12)+`<circle class="kpt" cx="${f(M.x)}" cy="${f(M.y)}" r="5"/>`;
+    g+=T({x:x0+a/2,y:yb+22},`taban = ${S.a} br`,'sml')+T({x:C.x-10,y:yb-h/2},`h = ${S.h}`,'sml','end');
+    if(S.t===0)g+=hdl('C',C,'Tepe noktası');api.draw(g);
+    const A2=S.a*S.h;
+    api.info(head(k>0.98?'İki üçgen = bir paralelkenar':'Kopya üçgen dönüyor',`Alan = ${S.a} × ${S.h} ÷ 2 = ${tr(A2/2)} br²`,null,'Kopya, BC kenarının orta noktası etrafında yarım tur döner.')+stats(stat('Paralelkenar',A2+' br²'),stat('Bir üçgen',tr(A2/2)+' br²','yarısı')));
+    if(user&&S.t>0.99)api.done('yarim');}
+  api.drag((id,p)=>{if(S.t>0)return;const s=clamp(Math.round((p.x-x0)/U),0,S.a);if(s!==S.s){S.s=s;render(true);}});
+  render(false);}},
+{name:'Aynı Taban, Aynı Yükseklik',why:true,note:'Tepe noktası tabana paralel bir doğru üzerinde kayarsa üçgenin şekli ve çevresi değişir ama alanı hiç değişmez. Alanı yalnızca taban ve yükseklik belirler.',
+init(api){
+  const S={a:4,h:5,cx:280},B1={x:200,y:380},x0=280;
+  api.hint('C noktasını sağa sola kaydır.');
+  api.slider({label:'Yükseklik',min:1,max:8,step:1,value:5,fmt:v=>v+' br',onInput:v=>{S.h=v;render(false);}});
+  function render(user){const B2={x:B1.x+S.a*U,y:B1.y},C={x:S.cx,y:B1.y-S.h*U},Fo={x:C.x,y:B1.y};let g=grid();
+    g+=L({x:0,y:C.y},{x:W,y:C.y},'dash')+`<path class="ghost" d="${pd([B1,B2,{x:x0,y:C.y}])}"/>`;
+    const out=C.x<B1.x||C.x>B2.x;if(out)g+=L(C.x<B1.x?Fo:B2,C.x<B1.x?B1:Fo,'dash');
+    g+=poly([B1,B2,C],'fpoly cA')+L(C,Fo,'dash')+rightMark(Fo,C.x<B1.x?0:180,12);
+    g+=T({x:(B1.x+B2.x)/2,y:B1.y+22},`taban = ${S.a} br`,'sml')+T({x:C.x+10,y:(C.y+B1.y)/2},`h = ${S.h}`,'sml','start')+T({x:C.x,y:C.y-20},'C','lbl')+T({x:B1.x-14,y:B1.y+16},'A','lbl')+T({x:B2.x+14,y:B2.y+16},'B','lbl');
+    g+=hdl('C',C,'C noktası');api.draw(g);
+    const per=(dist(B1,B2)+dist(B2,C)+dist(C,B1))/U;
+    api.info(head('Üçgenin alanı',`${S.a} × ${S.h} ÷ 2 = ${tr(S.a*S.h/2)} br²`,out?'Yükseklik dışarıda':null,out?'Geniş açılı üçgende yükseklik, tabanın uzantısına iner. Formül yine aynı!':'Kesikli üçgen ilk konum. Alanları aynı.')+stats(stat('Alan',tr(S.a*S.h/2)+' br²','hiç değişmiyor'),stat('Çevre',tr(per)+' br','değişiyor!')));
+    if(user){if(Math.abs(S.cx-x0)>=4*U)api.done('sabit');if(out)api.done('disari');}}
+  api.drag((id,p)=>{const x=clamp(snapv(p.x,20),40,600);if(x!==S.cx){S.cx=x;render(true);}});
+  render(false);}}
+]});
+
+/* ---------- Çember uzunluğu ---------- */
+reg({id:'pi6',g:6,sub:'Çember ve π Sayısı',title:'Pi Peşinde',
+icon:'<circle class="if" cx="36" cy="62" r="25"/><path class="is" d="M8 90H112"/><path class="is" d="M36 87L36 62" style="stroke-dasharray:5 6"/><text x="86" y="74" text-anchor="middle" style="font:800 48px var(--display);fill:var(--ink)">π</text>',
+tasks:[{k:'yuvarla',text:'Tekerleği bir tam tur yuvarla',lab:0},{k:'iki',text:'İki farklı büyüklükte tekerlek yuvarla, oranı karşılaştır',lab:0},{k:'sar',text:'Çapı çevreye sarmayı bitir',lab:1},{k:'r7',text:'Çapı 7 br olan çemberin çevresini 22/7 ile hesapla',lab:2}],
+labs:[
+{name:'Tekerleği Yuvarla',why:true,note:'Hangi büyüklükte tekerlek olursa olsun, bir turda aldığı yol çapının yaklaşık 3,14 katıdır. Bu sabit sayıya π (pi) denir: Çevre = π × çap.',
+init(api){
+  const S={r:1.5,t:0},rolled=new Set(),x0=50,gy=360;
+  api.hint('Tekerlek boyunu seç, Oynat\'a bas.');
+  api.slider({label:'Yarıçap',min:0.75,max:2,step:0.25,value:1.5,fmt:v=>tr(v,2)+' br',onInput:v=>{S.r=v;S.t=0;tl.set(0);render(false);}});
+  const tl=api.slider({label:'Yuvarla',min:0,max:1,step:0.001,value:0,play:true,dur:3800,fmt:v=>Math.round(v*360)+'°',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const r=S.r*U,C2=2*PI*r,d=C2*S.t,th=d/r*R2D;const c={x:x0+d,y:gy-r};let g=grid();
+    g+=L({x:20,y:gy},{x:620,y:gy},'ray thin');
+    for(let j=1;j<=3;j++){const x=x0+j*2*r;g+=L({x,y:gy-8},{x,y:gy+14},'ray thin')+T({x:x-r,y:gy+28},j+'. çap','sml');}
+    g+=L({x:x0,y:gy+6},{x:x0,y:gy-6},'ray thin');
+    const rem=x0+C2;g+=L({x:rem,y:gy-14},{x:rem,y:gy+14},'dash');
+    if(d>0)g+=`<line x1="${x0}" y1="${gy}" x2="${f(x0+d)}" y2="${gy}" style="stroke:var(--pen);stroke-width:7;stroke-linecap:round"/>`;
+    let cy='';const n=Math.max(2,Math.round(60*S.t));for(let i=0;i<=n;i++){const dd=d*i/n,a=270-dd/r*R2D;const q=polar({x:x0+dd,y:gy-r},r,a);cy+=(i?'L':'M')+f(q.x)+' '+f(q.y);}if(d>0)g+=`<path class="cyc" d="${cy}"/>`;
+    g+=`<circle cx="${f(c.x)}" cy="${f(c.y)}" r="${r}" class="cD" style="fill-opacity:.35;stroke:var(--ink);stroke-width:3.5"/>`;
+    for(let k=0;k<4;k++){g+=L(c,polar(c,r,45*k-th),'ray thin');g+=L(c,polar(c,r,45*k+180-th),'ray thin');}
+    if(th>0)g+=`<path d="${arc(c,r,270-Math.min(th,359.9),270)}" style="fill:none;stroke:var(--pen);stroke-width:7"/>`;
+    const mk=polar(c,r,270-th);g+=`<circle cx="${f(mk.x)}" cy="${f(mk.y)}" r="7" style="fill:var(--pen);stroke:var(--sheet);stroke-width:2"/>`;
+    api.draw(g);
+    const ratio=d/(2*r);
+    api.info(head('Yuvarlanan yol',`${tr(d/U,2)} br`,S.t>0.999?'Bir tam tur!':null,`Çap ${tr(2*S.r,1)} br. Kırmızı çizgi, tekerleğin çevresinin yere serilmiş hali.`)+stats(stat('Yol ÷ çap',tr(ratio,2)),stat('Tam turda',tr(2*PI*S.r,2)+' br','= 3,14 × '+tr(2*S.r))));
+    if(user&&S.t>0.999){api.done('yuvarla');rolled.add(S.r);if(rolled.size>=2)api.done('iki');}}
+  render(false);}},
+{name:'Çapı Çevreye Sar',why:true,note:'Çapı ip gibi düşünüp çemberin üstüne sararsan 3 tam çap sığar, biraz da artar. Bu "3 ve biraz" tam olarak π = 3,14159… sayısıdır.',
+init(api){
+  const C={x:320,y:230},r=110,S={t:0};
+  api.hint('Oynat\'a bas: çap çemberin etrafına sarılıyor.');
+  api.slider({label:'Sar',min:0,max:1,step:0.001,value:0,play:true,dur:4000,fmt:v=>tr(v*PI,2)+' çap',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const tot=S.t*PI;let g=grid();g+=`<circle cx="${C.x}" cy="${C.y}" r="${r}" class="ring" style="stroke-width:2"/>`;
+    g+=L({x:C.x-r,y:C.y},{x:C.x+r,y:C.y},'ray pen')+T({x:C.x,y:C.y-16},'çap','sml');
+    const step=2*R2D,cols=['var(--hl)','var(--hl2)','var(--hl3)','var(--hl4)'];
+    for(let j=0;j<4;j++){const s0=j,s1=Math.min(tot,j+1);if(s1<=s0)break;const a1=90-s0*step,a0=90-s1*step;
+      g+=`<path d="${arc(C,r,a0,a1)}" style="fill:none;stroke:${cols[j]};stroke-width:14;stroke-linecap:butt"/>`;
+      const p=polar(C,r,a1),q=polar(C,r+22,a1),qq=polar(C,r-16,a1);g+=L(qq,q,'ray thin');
+      g+=T(polar(C,r+34,(a0+a1)/2),j<3?(s1-s0>0.99?(j+1)+'. çap':''):tr(s1-s0,2),'sml');}
+    api.draw(g);
+    api.info(head('Çevreye sarılan',`${tr(tot,2)} çap`,S.t>0.999?'Çember tamamlandı':null,'Her renk bir çap uzunluğunda. Üç çap yetmiyor, küçük bir parça daha gerekiyor.')+`<p class="eqn">Çevre ≈ 3,14 × çap<small>π ≈ 3,14159…</small></p>`);
+    if(user&&S.t>0.999)api.done('sar');}
+  render(false);}},
+{name:'Çevre Hesaplayıcı',note:'Çevre = 2 × π × r = π × çap. Okulda π için çoğu zaman 3 ya da 3,14 kullanılır. Çap 7\'nin katıysa 22/7 hesabı kolaylaştırır.',
+init(api){
+  const O={x:320,y:220},S={r:3,pi:'3.14'};
+  api.hint('Kırmızı noktayı sürükleyerek yarıçapı değiştir.');
+  api.seg([['3','π ≈ 3'],['3.14','π ≈ 3,14'],['22/7','π ≈ 22/7']],'3.14',v=>{S.pi=v;render(true);},{label:'Pi değeri'});
+  function render(user){const r=S.r*U;let g=grid()+`<circle cx="${O.x}" cy="${O.y}" r="${r}" class="cD" style="fill-opacity:.25;stroke:var(--ink);stroke-width:3.5"/>`;
+    g+=L(O,{x:O.x+r,y:O.y},'ray pen')+T({x:O.x+r/2,y:O.y-16},`r = ${tr(S.r)}`,'sml')+`<circle class="vtx" cx="${O.x}" cy="${O.y}" r="5"/>`+hdl('r',{x:O.x+r,y:O.y},'Yarıçap');api.draw(g);
+    const d=2*S.r;let piv,txt;if(S.pi==='22/7'){piv=22/7;txt='22/7';}else{piv=+S.pi;txt=S.pi.replace('.',',');}
+    const c=piv*d;
+    api.info(head('Çemberin uzunluğu',`Ç ≈ ${tr(c,2)} br`,null,`Çap = 2 × ${tr(S.r)} = ${tr(d)} br`)+`<p class="eqn">Ç = π × çap ≈ ${txt} × ${tr(d)} = ${tr(c,2)}</p>`+stats(stat('Yarıçap',tr(S.r)+' br'),stat('Çap',tr(d)+' br')));
+    if(user&&S.pi==='22/7'&&Math.abs(d-7)<1e-6)api.done('r7');}
+  api.drag((id,p)=>{const r=clamp(Math.round((p.x-O.x)/(U/2))/2,1,4.5);if(r!==S.r){S.r=r;render(true);}});
+  render(false);}}
+]});
+
+/* ---------- Yüzey alanı ve hacim ---------- */
+function cubeFillLab(keys){return function(api){
+  const S={a:3,b:2,c:4,n:6},cam=cam3({s:38,cy:265});
+  api.hint('Boyutları seç, Oynat\'a bas. Döndürmek için sürükle.');
+  const fill=()=>{fl.input.max=S.a*S.b*S.c;fl.max=S.a*S.b*S.c;S.n=Math.min(S.n,S.a*S.b*S.c);fl.set(S.n);};
+  api.slider({label:'En',min:1,max:5,step:1,value:3,fmt:v=>v,onInput:v=>{S.a=v;fill();render(true);}});
+  api.slider({label:'Boy',min:1,max:5,step:1,value:2,fmt:v=>v,onInput:v=>{S.b=v;fill();render(true);}});
+  api.slider({label:'Yükseklik',min:1,max:5,step:1,value:4,fmt:v=>v,onInput:v=>{S.c=v;fill();render(true);}});
+  const fl=api.slider({label:'Küp koy',min:0,max:24,step:1,value:0,play:true,dur:4000,fmt:v=>Math.floor(v),onInput:v=>{S.n=Math.floor(v);render(true);}});
+  api.orbit(cam,()=>render(false));
+  function render(user){const {a,b,c}=S,ab=a*b,cells=[];for(let i=0;i<S.n;i++){const ly=Math.floor(i/ab),r=i%ab;cells.push([r%a-a/2,ly-c/2,Math.floor(r/a)-b/2]);}
+    let g=plain();const E=boxFaces(-a/2,-c/2,-b/2,a/2,c/2,b/2);const ed=[[0,1],[1,2],[2,3],[3,0]];
+    E.forEach(fc=>ed.forEach(([i,j])=>{g+=L(P3(fc.p[i],cam),P3(fc.p[j],cam),'dash');}));
+    g+=painter3(cubesFaces(cells,'cA'),cam);api.draw(g);
+    const full=Math.floor(S.n/ab);
+    api.info(head('Hacim',`${a} × ${b} × ${c} = ${a*b*c} br³`,S.n===a*b*c?'Kutu doldu':`${S.n} küp kondu`,`Bir katmana taban alanı kadar küp sığar: ${a} × ${b} = ${ab} küp.`)+stats(stat('Bir katman',ab+' küp'),stat('Dolu katman',full+' / '+c),stat('Toplam',S.n+' küp'))+`<p class="eqn">Hacim = taban alanı × yükseklik</p>`);
+    if(user&&S.n===a*b*c){if(keys.dolu)api.done(keys.dolu);if(keys.h24&&a*b*c===24)api.done(keys.h24);}}
+  fill();render(false);};}
+reg({id:'h6',g:6,sub:'Dik Prizmalar: Alan ve Hacim',title:'Kutunun İçi ve Dışı',
+icon:'<path class="if" d="M18 40L60 20L102 40L102 86L60 106L18 86Z"/><path class="is" d="M18 40L60 60L102 40M60 60V106M39 50V96M81 50V96M18 63L60 83L102 63"/>',
+tasks:[{k:'alan',text:'Kutuyu açıp yüzey alanını hesapla',lab:0},{k:'kup',text:'Küpün yüzey alanını bul',lab:0,hint:'Üç boyut eşit olsun'},{k:'dolu',text:'Bir kutuyu birim küplerle tamamen doldur',lab:1},{k:'h24',text:'Hacmi 24 br³ olan bir kutuyu doldur',lab:1}],
+labs:[
+{name:'Açınımda Yüzey Alanı',why:true,note:'Yüzey alanı, kutuyu kaplamak için gereken kâğıt miktarıdır. Açınımdaki 6 dikdörtgenin alanları toplanır: 2 × (en·boy + en·yükseklik + boy·yükseklik).',
+init(api){
+  const S={a:4,b:2,c:3,t:0},cam=cam3({s:30,cy:250,pitch:0.5});
+  api.hint('Boyutları seç, kutuyu aç.');
+  api.slider({label:'En',min:1,max:5,step:1,value:4,fmt:v=>v+' br',onInput:v=>{S.a=v;render(true);}});
+  api.slider({label:'Boy',min:1,max:4,step:1,value:2,fmt:v=>v+' br',onInput:v=>{S.b=v;render(true);}});
+  api.slider({label:'Yükseklik',min:1,max:4,step:1,value:3,fmt:v=>v+' br',onInput:v=>{S.c=v;render(true);}});
+  api.slider({label:'Aç',min:0,max:1,step:0.001,value:0,play:true,dur:3000,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  api.orbit(cam,()=>render(false));
+  function render(user){const {a,b,c}=S,k=ease(S.t);const c2=netCam(cam,S.a,S.b,S.c,k);
+    const F=netFaces(a,b,c,k);const ar={alt:a*b,üst:a*b,ön:a*c,arka:a*c,sağ:b*c,sol:b*c};if(S.t>0.98)F.forEach(fc=>fc.lab=ar[fc.n]+'');
+    api.draw(plain()+painter3(F,c2));const SA=2*(a*b+a*c+b*c);
+    api.info(head('Yüzey alanı',`${SA} br²`,a===b&&b===c?'Küp: 6 × '+a*a:null,'Açınımdaki sayılar her yüzün alanı.')+`<ul class="rows"><li><i class="sw cA"></i>Alt + üst<b>2 × ${a*b}</b></li><li><i class="sw cB"></i>Ön + arka<b>2 × ${a*c}</b></li><li><i class="sw cC"></i>Sağ + sol<b>2 × ${b*c}</b></li></ul><p class="eqn">2 × (${a*b} + ${a*c} + ${b*c}) = ${SA} br²</p>`);
+    if(user&&S.t>0.99){api.done('alan');if(a===b&&b===c)api.done('kup');}}
+  render(false);}},
+{name:'Birim Küplerle Hacim',why:true,note:'Hacim, kutunun içine kaç birim küp sığdığıdır. Önce tabana bir katman dizilir, sonra katmanlar üst üste konur: hacim = taban alanı × yükseklik.',init:cubeFillLab({dolu:'dolu',h24:'h24'})}
+]});
+
+/* ---------- Sıvı ölçme ---------- */
+function tankLab(o){return function(api){
+  const S={a:o.a,b:o.b,c:o.c,w:0},cam=cam3({s:o.s,cy:o.cy||250,pitch:0.45});
+  api.hint(o.hint);
+  if(o.dims){api.slider({label:'En',min:20,max:60,step:5,value:S.a,fmt:v=>v+' cm',onInput:v=>{S.a=v;render(true);}});
+    api.slider({label:'Boy',min:20,max:40,step:5,value:S.b,fmt:v=>v+' cm',onInput:v=>{S.b=v;render(true);}});
+    api.slider({label:'Yükseklik',min:20,max:50,step:5,value:S.c,fmt:v=>v+' cm',onInput:v=>{S.c=v;S.w=Math.min(S.w,v);ws.input.max=v;ws.max=v;ws.set(S.w);render(true);}});}
+  const ws=api.slider({label:'Su yüksekliği',min:0,max:S.c,step:o.step||1,value:0,play:true,dur:3500,fmt:v=>tr(v)+' cm',onInput:v=>{S.w=v;render(true);}});
+  api.orbit(cam,()=>render(false));
+  function render(user){const {a,b,c}=S;const w=Math.round(S.w*10)/10;let g=plain();
+    if(w>0.05)g+=convex3(boxFaces(-a/2+0.15,-c/2+0.05,-b/2+0.15,a/2-0.15,-c/2+w,b/2-0.15,'cD'),cam,{noHidden:true});
+    g+=convex3(boxFaces(-a/2,-c/2,-b/2,a/2,c/2,b/2,'glass'),cam);
+    if(o.unitCube){const u=boxFaces(a/2+3,-c/2,b/2-1,a/2+4,-c/2+1,b/2,'cA');g+=convex3(u,cam,{noHidden:true});const p=P3(v3(a/2+3.5,-c/2+1,b/2),cam);g+=T({x:p.x+40,y:p.y-26},'1 cm³','sml');}
+    api.draw(g);o.info(api,S,w,user);}
+  render(false);};}
+reg({id:'s6',g:6,sub:'Sıvı Ölçme',title:'Damla Damla Litre',
+icon:'<path class="if2" d="M30 16H90V100A6 6 0 0 1 84 106H36A6 6 0 0 1 30 100Z"/><path class="if" d="M30 58H90V100A6 6 0 0 1 84 106H36A6 6 0 0 1 30 100Z"/><path class="is" d="M30 16H90M74 32H90M80 46H90M74 60H90M80 74H90M74 88H90"/>',
+tasks:[{k:'litre',text:'1 dm³\'lük küpü tamamen doldur',lab:0},{k:'yarim',text:'Küpe tam 500 mL su koy',lab:0},{k:'b15',text:'Sürahiye tam 1,5 L su koy',lab:1},{k:'dl7',text:'Sürahiye tam 7 dL su koy',lab:1},{k:'l24',text:'Akvaryuma tam 24 L su koy',lab:2}],
+labs:[
+{name:'1 Litrelik Küp',why:true,note:'Ayrıtı 10 cm olan küpün hacmi 10 × 10 × 10 = 1000 cm³ = 1 dm³. Bu küp tam 1 litre su alır. Yani 1 cm³ = 1 mL.',
+init:tankLab({a:10,b:10,c:10,s:19,cy:250,step:0.1,unitCube:true,hint:'Su yüksekliğini artır. Döndürmek için sürükle.',
+  info(api,S,w,user){const ml=Math.round(100*w);api.info(head('Küpteki su',`${ml} mL`,ml===1000?'Tam 1 litre!':null,`Taban 10 cm × 10 cm = 100 cm². Su yüksekliği ${tr(w)} cm.`)+`<p class="eqn">100 × ${tr(w)} = ${ml} cm³ = ${ml} mL</p>`+stats(stat('Litre',tr(ml/1000,3)+' L'),stat('1 cm su',' 100 mL','her santimetre')));
+    if(user){if(ml===1000)api.done('litre');if(ml===500)api.done('yarim');}}})},
+{name:'Ölçü Merdiveni',note:'Sıvı ölçüleri onar onar büyür: 1 L = 10 dL = 100 cL = 1000 mL. Büyük birimden küçüğe inerken 10 ile çarpılır.',
+init(api){
+  const S={ml:0};
+  api.hint('Butonlarla sürahiye su ekle.');
+  [['+1 L',1000],['+1 dL',100],['+1 cL',10],['+1 mL',1]].forEach(([l,v])=>api.button(l,()=>{S.ml=Math.min(3000,S.ml+v);render(true);}));
+  api.button('Boşalt',()=>{S.ml=0;render(false);});
+  function render(user){const ml=S.ml;let g=grid();const x0=70,y0=60,w=170,h=330,yb=y0+h;const lv=yb-h*ml/3000;
+    g+=`<rect x="${x0}" y="${f(lv)}" width="${w}" height="${f(yb-lv)}" class="water"/>`;
+    g+=`<path class="outl" d="M${x0} ${y0}V${yb}H${x0+w}V${y0}"/><path class="outl" d="M${x0+w} ${y0+40}h28a12 12 0 0 1 12 12v120a12 12 0 0 1-12 12h-28"/>`;
+    for(let m=0;m<=3000;m+=100){const y=yb-h*m/3000,big=m%500===0;g+=L({x:x0,y},{x:x0+(big?34:18),y},'ray thin');if(m%500===0&&m>0)g+=T({x:x0+40,y},tr(m/1000)+' L','sml','start');}
+    const U4=['L','dL','cL','mL'],D=[1000,100,10,1],X=[330,410,490,570];
+    for(let i=0;i<4;i++){const y=110+i*70;g+=`<rect x="${X[i]-38}" y="${y-26}" width="76" height="52" rx="10" class="cP" style="stroke:var(--ink);stroke-width:2.5"/>`+T({x:X[i],y:y-8},U4[i],'ttl')+T({x:X[i],y:y+12},tr(ml/D[i],3),'sml');
+      if(i<3){const p={x:X[i]+6,y:y+30},q={x:X[i+1]-6,y:y+40};g+=`<path class="dash" d="M${p.x} ${p.y}Q${p.x+10} ${q.y+6} ${q.x} ${q.y}"/>`+T({x:(p.x+q.x)/2+6,y:q.y+14},'× 10','sml');}}
+    api.draw(g);
+    api.info(head('Sürahide',ml>=1000?tr(ml/1000,3)+' L':ml+' mL',null,`${ml} mL = ${tr(ml/10,1)} cL = ${tr(ml/100,2)} dL = ${tr(ml/1000,3)} L`)+stats(stat('Su bardağı (200 mL)',tr(ml/200,2)+' bardak'),stat('Çay kaşığı (5 mL)',Math.round(ml/5)+' kaşık')));
+    if(user){if(ml===1500)api.done('b15');if(ml===700)api.done('dl7');}}
+  render(false);}},
+{name:'Akvaryum',note:'Bir kaptaki sıvının hacmi = taban alanı × sıvının yüksekliği. Sonucu cm³ olarak bulursan 1000\'e bölerek litreye çevirirsin.',
+init:tankLab({a:40,b:30,c:30,s:5.2,cy:240,dims:true,step:1,hint:'Akvaryumun boyutlarını ve su yüksekliğini ayarla.',
+  info(api,S,w,user){const v=S.a*S.b*w;api.info(head('Akvaryumdaki su',`${tr(v/1000,3)} L`,null,`${S.a} cm × ${S.b} cm taban, ${tr(w)} cm su.`)+`<p class="eqn">${S.a} × ${S.b} × ${tr(w)} = ${v} cm³<small>1000 cm³ = 1 L</small></p>`+stats(stat('Tam dolu',tr(S.a*S.b*S.c/1000,2)+' L'),stat('Doluluk',Math.round(100*w/S.c)+'%')));
+    if(user&&v===24000)api.done('l24');}})}
+]});
+
+/* ======================= 7. SINIF ======================= */
+
+/* ---------- Doğrular ve açılar ---------- */
+reg({id:'p7',g:7,sub:'Doğrular ve Açılar',title:'Paralel Dedektifi',
+icon:'<path class="is" d="M8 28H112M8 94H112"/><path class="is" d="M28 28L86 61L36 94" style="stroke:var(--pen)"/><path class="if" d="M28 28L48 28A20 20 0 0 1 45.4 37.9Z"/>',
+tasks:[{k:'k60',text:'Kesende 1 numaralı açıyı 60° yap',lab:0},{k:'kdik',text:'Keseni paralellere dik yap',lab:0},{k:'zig90',text:'Zigzagdaki B açısını 90° yap',lab:1},{k:'coz3',text:'3 problemi doğru çöz',lab:2}],
+labs:[
+{name:'Kesen ve Açılar',note:'Kesenin eğimi değişince 8 açının hepsi değişir ama aralarındaki eşitlik ve bütünlerlik ilişkileri asla bozulmaz.',init:kesenLab({alt:'k60',dik:'kdik'})},
+{name:'Zigzag Kuralı',why:true,note:'B noktasından paralellere bir paralel daha çizersen B açısı ikiye ayrılır. Parçaların her biri bir iç ters açıya eşittir. Bu yüzden ∠B = ∠A + ∠C.',
+init(api){
+  const y1=110,y2=350,S={A:{x:160,y:y1},C:{x:200,y:y2},B:{x:420,y:220}};
+  api.hint('A, B ve C noktalarını sürükle.');
+  function render(user){const {A,B,C}=S;const al=Math.round(360-dirDeg(A,B)),be=Math.round(dirDeg(C,B));const x=Math.round(interior(B,A,C));
+    let g=grid()+L({x:0,y:y1},{x:W,y:y1})+L({x:0,y:y2},{x:W,y:y2})+parArrows({x:560,y:y1},{x:610,y:y1})+parArrows({x:560,y:y2},{x:610,y:y2});
+    g+=L({x:0,y:B.y},{x:W,y:B.y},'dash')+parArrows({x:560,y:B.y},{x:610,y:B.y});
+    g+=`<path class="fsec cA" d="${sector(A,40,360-al,360)}"/><path class="fsec cB" d="${sector(C,40,0,be)}"/>`;
+    g+=`<path class="fsec cA" d="${sector(B,40,180-al,180)}"/><path class="fsec cB" d="${sector(B,40,180,180+be)}"/>`;
+    g+=L(A,B,'ray pen')+L(B,C,'ray pen');
+    g+=T(polar(A,62,360-al/2),al+'°','val')+T(polar(C,62,be/2),be+'°','val')+T(polar(B,64,180-al/2),al+'°','sml')+T(polar(B,64,180+be/2),be+'°','sml');
+    g+=T({x:A.x-6,y:A.y-22},'A','lbl')+T({x:C.x-6,y:C.y+24},'C','lbl')+T({x:B.x+22,y:B.y-6},'B','lbl')+T({x:612,y:y1-16},'d','lbl')+T({x:612,y:y2-16},'e','lbl');
+    g+=hdl('A',A)+hdl('B',B)+hdl('C',C);api.draw(g);
+    api.info(head('d ∥ e',`m(∠B) = ${al}° + ${be}° = ${al+be}°`,null,'Kesikli çizgi B\'den geçen yardımcı paralel. Sarı açılar iç ters, pembe açılar da iç ters açılardır.')+stats(stat('∠A',al+'°'),stat('∠C',be+'°'),stat('∠B ölçülen',x+'°')));
+    if(user&&al+be===90)api.done('zig90');}
+  api.drag((id,p)=>{const {A,B,C}=S;if(id==='A')S.A={x:clamp(Math.round(p.x),30,B.x-40),y:y1};else if(id==='C')S.C={x:clamp(Math.round(p.x),30,B.x-40),y:y2};else S.B={x:clamp(Math.round(p.x),Math.max(A.x,C.x)+40,620),y:clamp(Math.round(p.y),y1+30,y2-30)};render(true);});
+  render(false);}},
+{name:'Problem Çöz',note:'Önce verilen açıyla x\'in ilişkisini bul: aynı renkteyseler eşit, farklı renkteyseler toplamları 180°.',
+init(api){
+  const S={q:null,ok:0,ans:false};
+  api.hint('x kaç derece? Cevabını yaz.');
+  const box=document.createElement('div');box.className='qin';box.innerHTML=`<label for="qx" style="font-weight:800">x =</label><input id="qx" type="number" inputmode="numeric" min="0" max="180"><span style="font-weight:800">°</span>`;
+  api.below.appendChild(box);const inp=box.querySelector('input');
+  const kb=api.button('Kontrol et',()=>check(),{primary:true,where:box}),nb=api.button('Yeni soru',()=>{gen();render();},{where:box});
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')check();});
+  function gen(){let al;do{al=30+5*Math.floor(Math.random()*25);}while(al===90);const gv=Math.floor(Math.random()*8);let j;do{j=Math.floor(Math.random()*8);}while(j===gv);S.q={al,gv,j};S.ans=false;inp.value='';}
+  function render(msg){const q=S.q;const r=kesenDraw({y1:140,y2:300,al:q.al},{quiz:true,hide:[],given:q.gv,ask:q.j,handles:false});api.draw(r.s);
+    api.info(msg||head('Soru',`x = ?`,null,`d ∥ e. ${q.gv+1} numaralı konumdaki açı ${r.VAL(q.gv)}°. x\'i bul.`)+stats(stat('Doğru',S.ok),stat('Hedef','3')));}
+  function check(){if(S.ans)return;const q=S.q,r=kesenRel(q.gv,q.j),v=q.j%2===0?q.al:180-q.al,u=+inp.value;if(inp.value==='')return;
+    const ok=u===v;if(ok){S.ok++;S.ans=true;}
+    render(head(ok?'Doğru!':'Tekrar dene',ok?`x = ${v}°`:`${u}° değil`,r.name,ok?(r.eq?'Bu iki açı eşit.':'Bu iki açının toplamı 180°.'):'İpucu: aynı renkte görünen açılar eşittir, farklı renkte olanlar bütünler.',ok?'good':'warn')+stats(stat('Doğru',S.ok),stat('Hedef','3')));
+    if(S.ok>=3)api.done('coz3');}
+  gen();render();}}
+]});
+
+/* ---------- Çokgenler 7 ---------- */
+function regPoly(n,C,R,rot){const P=[];for(let i=0;i<n;i++)P.push(polar(C,R,(rot==null?90:rot)+360*i/n));return P.map(p=>({x:Math.round(p.x),y:Math.round(p.y)}));}
+reg({id:'c7',g:7,sub:'Çokgenler',title:'Kaç Üçgen Sığar?',
+icon:'<path class="if" d="M60 12L102 36V84L60 108L18 84V36Z"/><path class="is" d="M60 12L102 84M60 12L60 108M60 12L18 84"/>',
+tasks:[{k:'alti',text:'Altıgenin iç açıları toplamını bul',lab:0},{k:'icb',text:'İçbükey çokgende de kuralın işlediğini gör',lab:0},{k:'kucult',text:'Çokgeni bir noktaya kadar küçült',lab:1},{k:'dose',text:'Kare dışında, düzlemi boşluksuz kaplayan bir düzgün çokgen bul',lab:2},{k:'yamuk',text:'Bir yamuk oluştur',lab:3},{k:'esk',text:'Bir eşkenar dörtgen oluştur, köşegenlerine bak',lab:3}],
+labs:[
+{name:'İç Açılar Toplamı',why:true,note:'Bir köşeden çizilen köşegenler n kenarlı çokgeni (n − 2) üçgene böler. Her üçgen 180° getirir: iç açılar toplamı = (n − 2) × 180°.',
+init(api){
+  const C={x:320,y:225},S={n:5,P:[]};
+  api.hint('Kenar sayısını seç, köşeleri sürükle.');
+  api.slider({label:'Kenar sayısı',min:3,max:10,step:1,value:5,fmt:v=>Math.round(v),onInput:v=>{S.n=Math.round(v);S.P=regPoly(S.n,C,165);render(true);}});
+  function render(user){const P=S.P,n=P.length,bad=selfX(P);let g=grid();
+    if(!bad){const cls=['cA','cB','cC'];for(let i=1;i<n-1;i++)g+=poly([P[0],P[i],P[i+1]],'fpoly '+cls[i%3]).replace('fpoly','fpoly soft');for(let i=2;i<n-1;i++)g+=L(P[0],P[i],'dash');}
+    g+=`<path class="outl" d="${pd(P)}"/>`;
+    const ang=bad?[]:polyAngles(P),G={x:P.reduce((a,p)=>a+p.x,0)/n,y:P.reduce((a,p)=>a+p.y,0)/n};
+    if(!bad)P.forEach((p,i)=>{const d=sub(G,p),dl=len(d)||1;g+=T({x:p.x+d.x/dl*30,y:p.y+d.y/dl*30},Math.round(ang[i])+'°','sml');});
+    g+=P.map((p,i)=>hdl('v'+i,p)).join('');api.draw(g);
+    if(bad){api.info(head('Durum','Kenarlar kesişiyor',null,'Çokgen olması için kenarlar kesişmemeli.',''));return;}
+    const conc=ang.some(a=>a>180.5),sum=Math.round(ang.reduce((a,b)=>a+b,0));
+    api.info(head(PL[n]+' · '+(n-2)+' üçgen',`(${n} − 2) × 180° = ${(n-2)*180}°`,conc?'İçbükey ama kural aynı':null,conc?'Köşegenlerin bazıları dışarı taşsa da toplam değişmiyor.':'Renkli bölgeler A köşesinden çizilen köşegenlerle oluşan üçgenler.')+stats(stat('Üçgen sayısı',n-2),stat('Ölçülen toplam',sum+'°')));
+    if(user){if(n===6)api.done('alti');if(conc)api.done('icb');}}
+  api.drag((id,p)=>{const i=+id.slice(1);S.P[i]={x:clamp(Math.round(p.x),20,W-20),y:clamp(Math.round(p.y),20,HT-20)};render(true);});
+  S.P=regPoly(5,C,165);render(false);}},
+{name:'Dış Açılar Turu',why:true,note:'Çokgenin etrafında yürüyen biri her köşede dış açı kadar döner ve başladığı yöne bakarak turu bitirir. Bir tam tur 360° olduğundan dış açılar toplamı her zaman 360°.',
+init(api){
+  const C={x:320,y:220},S={n:5,P:[],t:0};
+  api.hint('Köşeleri sürükle, sonra Oynat\'a bas.');
+  api.slider({label:'Kenar sayısı',min:3,max:8,step:1,value:5,fmt:v=>Math.round(v),onInput:v=>{S.n=Math.round(v);S.P=regPoly(S.n,C,150,100);S.t=0;tl.set(0);render(false);}});
+  const tl=api.slider({label:'Küçült',min:0,max:1,step:0.001,value:0,play:true,dur:3200,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  const cols=['cA','cB','cC','cD','cA','cB','cC','cD'];
+  function render(user){const P=S.P,n=P.length,k=ease(S.t);const G={x:P.reduce((a,p)=>a+p.x,0)/n,y:P.reduce((a,p)=>a+p.y,0)/n};
+    const Q=P.map(p=>lerpP(p,G,k*0.999));let g=grid();const bad=selfX(P);
+    g+=`<path class="outl" d="${pd(Q)}" style="fill:var(--hl4);fill-opacity:.12"/>`;
+    const ang=bad?[]:polyAngles(P),conc=!bad&&ang.some(a=>a>180.5);let tot=0;
+    Q.forEach((q,i)=>{const din=dirDeg(Q[(i-1+n)%n],q),dout=dirDeg(q,Q[(i+1)%n]);let turn=((dout-din+540)%360)-180;tot+=Math.abs(turn);
+      const a0=turn>=0?din:dout,a1=turn>=0?din+turn:din;g+=L(q,polar(q,58*(1-k)+12,din),'dash');
+      g+=`<path class="fsec ${cols[i]}" d="${sector(q,44,a0,a1)}"/>`;if(k<0.6)g+=T(polar(q,64,(a0+a1)/2),Math.round(Math.abs(turn))+'°','sml');});
+    if(k>0.98)g+=`<circle cx="${f(G.x)}" cy="${f(G.y)}" r="50" style="fill:none;stroke:var(--ink);stroke-width:2"/>`+T({x:G.x,y:G.y+74},'Tam tur = 360°','ttl');
+    if(S.t===0)g+=P.map((p,i)=>hdl('v'+i,p)).join('');api.draw(g);
+    api.info(head('Dış açılar',`Toplam = ${Math.round(tot)}°`,conc||bad?'Dışbükey çokgen kullan':(k>0.98?'Hepsi bir noktada':null),conc||bad?'Dış açı kuralı dışbükey çokgenler için.':'Çokgen küçüldükçe dış açılar bir noktada buluşup tam bir daire oluşturur.',conc||bad?'warn':'good')+stats(stat('Köşe sayısı',n),stat('Toplam',Math.round(tot)+'°','n ne olursa olsun')));
+    if(user&&S.t>0.99&&!conc&&!bad)api.done('kucult');}
+  api.drag((id,p)=>{if(S.t>0)return;const i=+id.slice(1);S.P[i]={x:clamp(Math.round(p.x),30,W-30),y:clamp(Math.round(p.y),30,HT-30)};render(false);});
+  S.P=regPoly(5,C,150,100);render(false);}},
+{name:'Düzgün Çokgenler',why:true,note:'Düzgün çokgenin her iç açısı (n − 2) × 180° ÷ n. Bir noktanın çevresi 360° olduğundan yalnızca iç açısı 360°\'yi tam bölen üçgen, kare ve altıgen düzlemi boşluksuz kaplar. Arı peteği bu yüzden altıgendir.',
+init(api){
+  const S={n:6};
+  api.hint('Kenar sayısını değiştir, sağdaki döşemeyi izle.');
+  api.slider({label:'Kenar sayısı',min:3,max:12,step:1,value:6,fmt:v=>Math.round(v),onInput:v=>{S.n=Math.round(v);render(true);}});
+  function render(user){const n=S.n,ia=(n-2)*180/n,ea=360/n,C={x:170,y:225},P=regPoly(n,C,125,90+180/n);let g=grid();
+    P.forEach(p=>{g+=L(C,p,'dash');});g+=`<path class="fpoly cD soft" d="${pd(P)}"/>`;
+    const w=wedge(P[0],P[n-1],P[1]);g+=`<path class="fsec cA" d="${sector(P[0],30,w.s,w.s+w.d)}"/>`+T(polar(P[0],54,w.s+w.d/2),tr(ia)+'°','sml');
+    g+=`<path class="fsec cB" d="${sector(C,26,90+180/n,90+180/n+ea)}"/>`+T(polar(C,44,90+180/n+ea/2),tr(ea)+'°','sml');
+    const V={x:470,y:225},k=Math.floor(360/ia+1e-9),side=n>8?34:n>6?42:52,cls=['cA','cB','cC','cD'];
+    for(let j=0;j<k;j++){const ph=j*ia;const Q=[V];let p=V;for(let m=0;m<n-1;m++){p=polar(p,side,ph+m*ea);Q.push(p);}g+=poly(Q,'fpoly '+cls[j%4]);}
+    const gap=360-k*ia;if(gap>0.5)g+=`<path d="${sector(V,side*0.9,k*ia,360)}" style="fill:var(--pen);fill-opacity:.55"/>`+T(polar(V,side+24,k*ia+gap/2),tr(gap)+'° boşluk','sml');
+    g+=`<circle class="vtx" cx="${V.x}" cy="${V.y}" r="4"/>`+T({x:170,y:405},'Düzgün '+PL[n],'ttl')+T({x:470,y:405},gap>0.5?'Boşluk kalıyor':'Tam kaplıyor!','ttl');api.draw(g);
+    api.info(head('Düzgün '+PL[n],`İç açı = ${tr(ia)}°`,gap>0.5?'Düzlemi kaplamaz':'Düzlemi kaplar','Tüm kenarları ve tüm açıları eşit.',gap>0.5?'':'good')+`<p class="eqn">(${n} − 2) × 180° ÷ ${n} = ${tr(ia)}°</p>`+stats(stat('Dış açı',tr(ea)+'°','360° ÷ '+n),stat('Merkez açı',tr(ea)+'°','360° ÷ '+n)));
+    if(user&&gap<=0.5&&n!==4)api.done('dose');}
+  render(false);}},
+{name:'Yamuk ve Eşkenar Dörtgen',note:'Eşkenar dörtgenin köşegenleri birbirini dik keser ve ortalar. Yamuğun yalnızca bir çift kenarı paraleldir; ikizkenar yamukta köşegenler eşittir.',init:quadLab({yamuk:'yamuk',esk:'esk'},true)}
+]});
+
+/* ---------- Daire alanı ---------- */
+reg({id:'d7',g:7,sub:'Çember ve Daire',title:'Pizza Matematiği',
+icon:'<circle class="if" cx="54" cy="64" r="42"/><path class="is" d="M54 64L96 64M54 64L33 27.6M54 64L33 100.4"/><path class="if2" d="M70 54L112 54A42 42 0 0 0 91 17.6Z"/>',
+tasks:[{k:'diz',text:'Daireyi en az 24 dilime böl ve dikdörtgene diz',lab:0},{k:'ceyrek',text:'Çeyrek daire dilimi oluştur',lab:1},{k:'alt',text:'Dairenin altıda biri olan dilimi oluştur',lab:1}],
+labs:[
+{name:'Dilimle ve Diz',why:true,note:'Daireyi ince dilimlere ayırıp ters-düz dizince dikdörtgene benzer. Uzun kenarı çevrenin yarısı (π·r), kısa kenarı yarıçap (r). Alan = π·r·r = π·r².',
+init(api){
+  const S={n:8,t:0},r=80,C0={x:320,y:150},yb=390,yt=yb-r;
+  api.hint('Dilim sayısını seç, Oynat\'a bas.');
+  api.slider({label:'Dilim sayısı',min:4,max:40,step:2,value:8,fmt:v=>Math.round(v),onInput:v=>{S.n=Math.round(v);render(true);}});
+  api.slider({label:'Diz',min:0,max:1,step:0.001,value:0,play:true,dur:3600,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const n=S.n,w=360/n,k=ease(S.t),s=2*PI*r/n,off=320-((n/2)*s+s/2)/2;let g=grid();
+    if(S.t>0)g+=`<circle cx="${C0.x}" cy="${C0.y}" r="${r}" class="ring"/>`;
+    for(let i=0;i<n;i++){const ev=i%2===0,tgt=ev?{x:off+(i/2)*s+s/2,y:yt}:{x:off+((i+1)/2)*s,y:yb},b1=ev?270:90,b0=i*w+w/2;
+      const dl=((b1-b0+540)%360)-180,b=b0+dl*k,c=lerpP(C0,tgt,k);g+=`<path class="fsec ${ev?'cA':'cB'}" style="stroke-width:1" d="${sector(c,r,b-w/2,b+w/2)}"/>`;}
+    if(S.t>0.97){const xL=off,xR=off+(n/2)*s+s/2;g+=L({x:xL+s/4,y:yb+16},{x:xR-s/4,y:yb+16},'dim')+T({x:320,y:yb+30},'≈ π·r (çevrenin yarısı)','dimt');
+      g+=L({x:xR+12,y:yt},{x:xR+12,y:yb},'dim')+T({x:xR+30,y:(yt+yb)/2},'r','dimt');}
+    api.draw(g);
+    api.info(head(S.t>0.97?'Neredeyse bir dikdörtgen':'Daire dilimleniyor',`Alan = π · r · r = π · r²`,n>=24?'İnce dilimler':'Daha çok dilim dene',`${n} dilim. Dilimler inceldikçe kenarlar düzleşir ve şekil dikdörtgene yaklaşır.`)+stats(stat('Uzun kenar','π · r','çevrenin yarısı'),stat('Kısa kenar','r','yarıçap')));
+    if(user&&n>=24&&S.t>0.99)api.done('diz');}
+  render(false);}},
+{name:'Daire Dilimi',note:'Daire dilimi, merkez açısı kadar daireden pay alır. 90° dairenin dörtte biri, 60° altıda biridir: dilim alanı = π·r² × α ÷ 360.',
+init(api){
+  const O={x:300,y:225},S={r:3,a:120};
+  api.hint('Kırmızı noktayı sürükleyerek merkez açısını değiştir.');
+  api.slider({label:'Yarıçap',min:1,max:4.5,step:0.5,value:3,fmt:v=>tr(v)+' br',onInput:v=>{S.r=v;render(true);}});
+  function render(user){const r=S.r*U,a=S.a;let g=grid()+`<circle cx="${O.x}" cy="${O.y}" r="${r}" class="cD" style="fill-opacity:.15;stroke:var(--ink);stroke-width:2"/>`;
+    g+=`<path class="fsec cA" style="stroke-width:3" d="${sector(O,r,0,a)}"/>`+`<path d="${arc(O,r,0,a)}" style="fill:none;stroke:var(--pen);stroke-width:5"/>`;
+    g+=`<path class="sec" style="fill:var(--hl2)" d="${sector(O,30,0,a)}"/>`+T(polar(O,52,a/2),a+'°','val');
+    g+=T(polar(O,r/2,-14),'r','sml')+hdl('a',polar(O,r,a),'Merkez açısı');api.draw(g);
+    const A=PI*S.r*S.r,frac=a/360;
+    api.info(head(`Merkez açısı ${a}°`,`Dilim = ${tr(A*frac,2)} br²`,a===90?'Çeyrek daire':a===180?'Yarım daire':a===60?'Altıda bir':null,`Daire alanı π·r² ≈ 3,14 × ${tr(S.r*S.r,2)} = ${tr(A,2)} br²`)+`<p class="eqn">π·r² × ${a}/360 ≈ ${tr(A*frac,2)} br²</p>`+stats(stat('Daireden payı',tr(frac*100,1)+'%'),stat('Yay uzunluğu',tr(2*PI*S.r*frac,2)+' br','kırmızı yay')));
+    if(user){if(a===90)api.done('ceyrek');if(a===60)api.done('alt');}}
+  api.drag((id,p)=>{let a=Math.round(dirDeg(O,p)/5)*5;if(a===0)a=S.a>180?360:5;a=clamp(a,5,360);if(a!==S.a){S.a=a;render(true);}});
+  render(false);}}
+]});
+
+/* ---------- Yardımcı elemanlar ---------- */
+function triCenters(P){const {A,B,C}=P,a=dist(B,C),b=dist(C,A),c=dist(A,B),s=(a+b+c)/2,ar=Math.abs(cross(sub(B,A),sub(C,A)))/2;
+  const G={x:(A.x+B.x+C.x)/3,y:(A.y+B.y+C.y)/3},I={x:(a*A.x+b*B.x+c*C.x)/(a+b+c),y:(a*A.y+b*B.y+c*C.y)/(a+b+c)};
+  const Ha=foot(A,B,C),Hb=foot(B,C,A),Hc=foot(C,A,B),H=intersect(A,Ha,B,Hb);
+  return {a,b,c,s,ar,G,I,r:ar/s,Ha,Hb,Hc,H,Da:{x:(b*B.x+c*C.x)/(b+c),y:(b*B.y+c*C.y)/(b+c)},Db:{x:(a*A.x+c*C.x)/(a+c),y:(a*A.y+c*C.y)/(a+c)},Dc:{x:(a*A.x+b*B.x)/(a+b),y:(a*A.y+b*B.y)/(a+b)},Ma:mid(B,C),Mb:mid(C,A),Mc:mid(A,B)};}
+reg({id:'y7',g:7,sub:'Üçgenin Yardımcı Elemanları',title:'Üçgenin Gizli Çizgileri',
+icon:'<path class="if" d="M12 100H108L44 18Z"/><path class="is" d="M44 18L60 100M12 100L76 59M108 100L28 59" style="stroke-dasharray:6 6"/><circle class="ipen" cx="54.7" cy="72.7" r="6"/>',
+tasks:[{k:'g',text:'Kenarortayları çiz, ağırlık merkezini bul',lab:0},{k:'ic',text:'Açıortaylarla iç teğet çemberi çiz',lab:0},{k:'dis',text:'Yükseklikleri dışarıda kesişen bir üçgen yap',lab:0,hint:'Geniş açılı üçgen'},{k:'alti',text:'Kenarortayların oluşturduğu 6 parçayı ayır',lab:1}],
+labs:[
+{name:'Kenarortay, Açıortay, Yükseklik',note:'Kenarortay kenarın orta noktasına, açıortay açıyı iki eş parçaya, yükseklik karşı kenara dik iner. Her türün üç çizgisi tek bir noktada buluşur.',
+init(api){
+  const P={A:{x:240,y:80},B:{x:120,y:380},C:{x:540,y:380}},S={m:true,b:false,h:false,ic:false};
+  api.hint('Çizgileri aç, köşeleri sürükle.');
+  api.check('Kenarortay',true,v=>{S.m=v;render(true);});api.check('Açıortay',false,v=>{S.b=v;render(true);});api.check('Yükseklik',false,v=>{S.h=v;render(true);});api.check('İç teğet çember',false,v=>{S.ic=v;render(true);});
+  function render(user){const st=triState(P);let g=grid();if(st.degen){api.draw(g+`<path class="tri" d="${pd([P.A,P.B,P.C])}"/>`+triHandles(P));api.info(degenInfo());return;}
+    const c=triCenters(P);g+=triDraw(P,st,{sides:false,angleVals:!S.b,ticks:false});
+    const V=[P.A,P.B,P.C];let info='';
+    if(S.h){[[P.A,c.Ha,P.B,P.C],[P.B,c.Hb,P.C,P.A],[P.C,c.Hc,P.A,P.B]].forEach(([v,h,p,q])=>{if(h.t<0||h.t>1)g+=L(h.t<0?h:q,h.t<0?p:h,'dash');g+=`<line x1="${f(v.x)}" y1="${f(v.y)}" x2="${f(h.x)}" y2="${f(h.y)}" style="stroke:var(--ink);stroke-width:2.6;stroke-dasharray:9 5"/>`+rightMark(h,dirDeg(h,q),11);});
+      if(c.H){const out=st.byAng==='Geniş açılı';if(out){g+=L(P.A,c.H,'dash')+L(P.B,c.H,'dash')+L(P.C,c.H,'dash');}g+=`<circle cx="${f(c.H.x)}" cy="${f(c.H.y)}" r="6" style="fill:var(--ink)"/>`+T({x:c.H.x+14,y:c.H.y-14},'H','lbl');
+        info+=`<li class="${out?'y':'n'}"><b>Yükseklikler</b>: ${out?'H dışarıda kesişiyor (geniş açılı)':st.byAng==='Dik açılı'?'H dik açının köşesinde':'H üçgenin içinde'}. h<sub>a</sub> = ${tr(dist(P.A,c.Ha)/U)} br</li>`;}}
+    if(S.m){[[P.A,c.Ma],[P.B,c.Mb],[P.C,c.Mc]].forEach(([v,m])=>{g+=`<line x1="${f(v.x)}" y1="${f(v.y)}" x2="${f(m.x)}" y2="${f(m.y)}" style="stroke:var(--ok);stroke-width:3"/>`+`<circle cx="${f(m.x)}" cy="${f(m.y)}" r="4" style="fill:var(--ok)"/>`;});
+      g+=eqTicks(P.B,c.Ma)+eqTicks(c.Ma,P.C)+eqTicks(P.C,c.Mb,2)+eqTicks(c.Mb,P.A,2)+eqTicks(P.A,c.Mc,3)+eqTicks(c.Mc,P.B,3);
+      g+=`<circle cx="${f(c.G.x)}" cy="${f(c.G.y)}" r="7" style="fill:var(--ok);stroke:var(--sheet);stroke-width:2"/>`+T({x:c.G.x+16,y:c.G.y+14},'G','lbl');
+      info+=`<li class="y"><b>Kenarortaylar</b> G\'de kesişir. |AG| = ${tr(dist(P.A,c.G)/U)}, |GD| = ${tr(dist(c.G,c.Ma)/U)} br → oran 2 : 1</li>`;}
+    if(S.b||S.ic){if(S.b)[[P.A,c.Da],[P.B,c.Db],[P.C,c.Dc]].forEach(([v,d])=>{g+=`<line x1="${f(v.x)}" y1="${f(v.y)}" x2="${f(d.x)}" y2="${f(d.y)}" style="stroke:var(--pen);stroke-width:3"/>`;});
+      if(S.b)V.forEach((v,i)=>{const w=wedge(v,V[(i+1)%3],V[(i+2)%3]);g+=`<path d="${arc(v,46,w.s,w.s+w.d/2)}" style="fill:none;stroke:var(--pen);stroke-width:2"/><path d="${arc(v,52,w.s+w.d/2,w.s+w.d)}" style="fill:none;stroke:var(--pen);stroke-width:2"/>`;});
+      if(S.ic)g+=`<circle cx="${f(c.I.x)}" cy="${f(c.I.y)}" r="${f(c.r)}" style="fill:var(--hl2);fill-opacity:.2;stroke:var(--pen);stroke-width:2.5"/>`;
+      g+=`<circle cx="${f(c.I.x)}" cy="${f(c.I.y)}" r="6" style="fill:var(--pen);stroke:var(--sheet);stroke-width:2"/>`+T({x:c.I.x-16,y:c.I.y-14},'I','lbl');
+      info+=`<li class="y"><b>Açıortaylar</b> I\'da kesişir. I\'nın üç kenara uzaklığı eşit: r = ${tr(c.r/U)} br</li>`;}
+    g+=triHandles(P);api.draw(g);
+    api.info(head('Üçgen',st.byAng,null,'Yeşil: kenarortay. Kırmızı: açıortay. Kesikli: yükseklik.')+(info?`<ul class="checks">${info}</ul>`:'<p class="desc">Yukarıdan bir çizgi türü seç.</p>'));
+    if(user){if(S.m)api.done('g');if(S.ic)api.done('ic');if(S.h&&st.byAng==='Geniş açılı')api.done('dis');}}
+  api.drag((id,p)=>{if(triMove(P,id,p,true))render(true);});render(false);}},
+{name:'Altı Eş Parça',why:true,note:'Kenarortay üçgeni iki eş alana böler: tabanlar eş, yükseklik ortak. Üç kenarortay birlikte üçgeni alanları eşit 6 küçük üçgene ayırır.',
+init(api){
+  const P={A:{x:280,y:70},B:{x:100,y:380},C:{x:560,y:360}},S={t:0};
+  api.hint('Köşeleri sürükle, sonra parçaları ayır.');
+  api.slider({label:'Parçaları ayır',min:0,max:1,step:0.001,value:0,play:true,dur:2000,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const st=triState(P);let g=grid();if(st.degen){api.draw(g+`<path class="tri" d="${pd([P.A,P.B,P.C])}"/>`+triHandles(P));api.info(degenInfo());return;}
+    const c=triCenters(P),G=c.G,k=ease(S.t)*26;
+    const parts=[[P.A,c.Mc,G],[c.Mc,P.B,G],[P.B,c.Ma,G],[c.Ma,P.C,G],[P.C,c.Mb,G],[c.Mb,P.A,G]],cls=['cA','cB','cC','cD','cA','cB'];
+    const one=st.area/6/(U*U);
+    parts.forEach((pp,i)=>{const ctr={x:(pp[0].x+pp[1].x+pp[2].x)/3,y:(pp[0].y+pp[1].y+pp[2].y)/3},d=sub(ctr,G),dl=len(d)||1,o={x:d.x/dl*k,y:d.y/dl*k};
+      const q=pp.map(p=>add(p,o));g+=poly(q,'fpoly '+cls[i]);g+=T(add(ctr,o),tr(one,2),'sml');});
+    if(S.t===0)g+=triHandles(P);api.draw(g);
+    api.info(head('Altı küçük üçgen',`Her biri ${tr(one,2)} br²`,null,`Toplam alan ${tr(st.area/(U*U),2)} br². 6\'ya bölünce her parça aynı.`)+`<p class="eqn">${tr(st.area/(U*U),2)} ÷ 6 = ${tr(one,2)} br²</p>`);
+    if(user&&S.t>0.99)api.done('alti');}
+  api.drag((id,p)=>{if(S.t>0)return;if(triMove(P,id,p,true))render(false);});render(false);}}
+]});
+
+/* ---------- Farklı yönlerden görünüm ---------- */
+function views(h){const fr=[0,1,2,3].map(x=>Math.max(...[0,1,2,3].map(z=>h[z][x]))),rt=[3,2,1,0].map(z=>Math.max(...h[z])),tp=h.map(r=>r.map(v=>v>0));return {fr,rt,tp};}
+function viewGrid(x0,y0,cs,cols,data,top){let g='';const rows=top?4:3;
+  for(let i=0;i<cols;i++)for(let r=0;r<rows;r++){const on=top?data[r][i]:(rows-1-r)<data[i];g+=`<rect x="${x0+i*cs}" y="${y0+r*cs}" width="${cs}" height="${cs}" style="fill:${on?'var(--hl)':'var(--paper)'};stroke:${on?'var(--ink)':'var(--grid2)'};stroke-width:${on?2:1}"/>`;}
+  return g;}
+function cubesOf(h){const cells=[];for(let z=0;z<4;z++)for(let x=0;x<4;x++)for(let y=0;y<h[z][x];y++)cells.push([x-2,y,z-2]);return cells;}
+function editor(api,h,onCh){const ed=document.createElement('div');ed.className='ed';const gd=document.createElement('div');gd.className='ed-grid';gd.setAttribute('aria-label','Kule yükseklikleri, üstten görünüm');
+  const btns=[];for(let z=0;z<4;z++)for(let x=0;x<4;x++){const b=document.createElement('button');b.type='button';b.onclick=()=>{h[z][x]=(h[z][x]+1)%4;sync();onCh();};gd.appendChild(b);btns.push([b,z,x]);}
+  const sync=()=>btns.forEach(([b,z,x])=>{b.textContent=h[z][x]||'';b.className=h[z][x]?'on':'';b.setAttribute('aria-label',`Satır ${z+1}, sütun ${x+1}: ${h[z][x]} küp`);});
+  ed.appendChild(gd);const sm=document.createElement('small');sm.innerHTML='Kareye dokundukça o noktadaki kule 1 küp yükselir (en fazla 3, sonra sıfırlanır). Üst sıra arka, alt sıra ön taraf.';ed.appendChild(sm);api.below.appendChild(ed);sync();return sync;}
+reg({id:'g7',g:7,sub:'Cisimlerin Farklı Yönden Görünümleri',title:'Üç Göz Bakışı',
+icon:'<path class="if" d="M20 50L44 38L68 50L68 78L44 90L20 78Z"/><path class="is" d="M20 50L44 62L68 50M44 62V90"/><path class="if" d="M44 26L68 14L92 26L92 54L68 66L44 54Z"/><path class="is" d="M44 26L68 38L92 26M68 38V66"/><path class="if" d="M68 62L92 50L116 62L116 90L92 102L68 90Z"/>',
+tasks:[{k:'sekiz',text:'En az 8 küplük bir yapı kur',lab:0},{k:'ayni',text:'Önden ve sağdan görünümü aynı olan bir yapı kur',lab:0},{k:'bulmaca',text:'Bir görünüm bulmacasını çöz',lab:1}],
+labs:[
+{name:'Küp Kule Ustası',note:'Önden bakınca her sütunun en yüksek kulesini görürüz; arkadakiler önündekilerin arkasına saklanır. Bu yüzden görünüm, küp sayısını her zaman söylemez.',
+init(api){
+  const h=[[1,0,0,0],[2,1,0,0],[3,2,1,0],[1,1,1,1]],cam=cam3({yaw:-0.78,pitch:0.62,s:40,cx:215,cy:250});
+  api.hint('Aşağıdaki kareye dokunarak küp ekle. Döndürmek için sürükle.');
+  const sync=editor(api,h,()=>render(true));
+  api.button('Yapıyı 90° döndür',()=>{const n=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];for(let z=0;z<4;z++)for(let x=0;x<4;x++)n[x][3-z]=h[z][x];for(let z=0;z<4;z++)h[z]=n[z];sync();render(true);});
+  api.button('Temizle',()=>{h.forEach(r=>r.fill(0));sync();render(false);});
+  api.orbit(cam,()=>render(false));
+  function render(user){const cells=cubesOf(h),v=views(h);let g=plain();
+    g+=painter3(cubesFaces(cells,'cA'),cam);const fp=P3(v3(0,0,3),cam);g+=T({x:fp.x-14,y:fp.y+22},'ÖN','sml');const rp=P3(v3(3,0,0),cam);g+=T({x:rp.x+22,y:rp.y+18},'SAĞ','sml');
+    g+=T({x:470,y:22},'Önden','ttl','start')+viewGrid(470,34,24,4,v.fr);
+    g+=T({x:470,y:142},'Sağdan','ttl','start')+viewGrid(470,154,24,4,v.rt);
+    g+=T({x:470,y:262},'Üstten','ttl','start')+viewGrid(470,274,24,4,v.tp,true);
+    api.draw(g);const n=cells.length;
+    api.info(head('Yapı',`${n} birim küp`,null,'Sağdaki üç görünüm, yapıya ön, sağ ve üst taraftan dik bakınca görülen karelerdir.')+stats(stat('Önden kare',v.fr.reduce((a,b)=>a+b,0)),stat('Sağdan kare',v.rt.reduce((a,b)=>a+b,0)),stat('Üstten kare',v.tp.flat().filter(Boolean).length)));
+    if(user){if(n>=8)api.done('sekiz');if(n>0&&v.fr.join()===v.rt.join())api.done('ayni');}}
+  render(false);}},
+{name:'Görünümden Yapıya',why:true,note:'Üç görünüm bir yapıyı çoğu zaman tek başına belirlemez: aynı görünümleri veren farklı yapılar kurulabilir. Mühendisler bu yüzden teknik çizimlere ek bilgi koyar.',
+init(api){
+  const PZ=[[[0,0,0,0],[0,1,0,0],[1,2,1,0],[1,1,0,0]],[[0,0,0,0],[2,0,0,0],[2,1,1,0],[1,1,1,1]],[[0,0,0,0],[0,3,0,0],[1,2,1,0],[0,1,0,0]],[[1,0,0,1],[1,0,0,1],[2,1,1,2],[0,0,0,0]]];
+  const S={p:0};const h=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],cam=cam3({yaw:-0.78,pitch:0.6,s:30,cx:170,cy:270});
+  api.hint('Hedef görünümleri veren bir yapı kur.');
+  const sync=editor(api,h,()=>render(true));
+  api.button('Yeni bulmaca',()=>{S.p=(S.p+1)%PZ.length;h.forEach(r=>r.fill(0));sync();render(false);});
+  api.orbit(cam,()=>render(false));
+  function render(user){const tv=views(PZ[S.p]),uv=views(h);const ok=[tv.fr.join()===uv.fr.join(),tv.rt.join()===uv.rt.join(),JSON.stringify(tv.tp)===JSON.stringify(uv.tp)];
+    let g=plain()+painter3(cubesFaces(cubesOf(h),'cB'),cam);const fp=P3(v3(0,0,2.6),cam);g+=T({x:fp.x,y:fp.y+18},'ÖN','sml');
+    g+=T({x:410,y:20},'Hedef','ttl')+T({x:540,y:20},'Seninki','ttl');
+    [['Önden',tv.fr,uv.fr,false],['Sağdan',tv.rt,uv.rt,false],['Üstten',tv.tp,uv.tp,true]].forEach(([n,a,b,tp],i)=>{const y=48+i*128;g+=T({x:330,y:y+36},n,'sml','start');g+=viewGrid(372,y,20,4,a,tp)+viewGrid(500,y,20,4,b,tp);
+      g+=`<circle cx="${600}" cy="${y+36}" r="10" style="fill:${ok[i]?'var(--ok)':'var(--paper)'};stroke:var(--ink-soft)"/>`;});
+    api.draw(g);const all=ok.every(Boolean)&&cubesOf(h).length>0;
+    api.info(head(`Bulmaca ${S.p+1}`,all?'Çözdün!':`${ok.filter(Boolean).length} / 3 görünüm tuttu`,all?`${cubesOf(h).length} küp kullandın`:null,all?'Aynı görünümleri farklı sayıda küple de elde edebilir misin?':'Önce üstten görünümü tutturmak işini kolaylaştırır.',all?'good':''));
+    if(user&&all)api.done('bulmaca');}
+  render(false);}}
+]});
+
+/* ======================= 8. SINIF ======================= */
+
+/* ---------- Üçgende açı-kenar, eşitsizlik ---------- */
+reg({id:'e8',g:8,sub:'Üçgenler',title:'Kenar Kavgası',
+icon:'<path class="is" d="M12 96H108"/><path class="is" d="M12 96L44 46" style="stroke:var(--pen)"/><path class="is" d="M108 96L80 44" style="stroke:var(--hl4)"/><path class="is" d="M50 40L74 38" style="stroke-dasharray:4 6;stroke-width:3"/>',
+tasks:[{k:'olur',text:'Üç çubukla bir üçgen kur',lab:0},{k:'olmaz',text:'Üçgen kurulamayan üç uzunluk bul',lab:0},{k:'duz',text:'Çubukların tam düz çizgi olduğu sınır durumu bul',lab:0},{k:'esit',text:'İki açısı eşit bir üçgende karşı kenarları karşılaştır',lab:1},{k:'dik',text:'Dik üçgende en uzun kenarı bul',lab:1}],
+labs:[
+{name:'Üçgen Eşitsizliği',why:true,note:'Kısa iki kenarın toplamı üçüncü kenardan uzun olmazsa çubuklar birbirine yetişemez. Kural: her kenar, öbür ikisinin farkından büyük ve toplamından küçük olmalı.',
+init(api){
+  const S={a:8,b:5,c:4,t:0},Sc=40,yb=360;
+  api.hint('Çubuk uzunluklarını seç, Oynat\'a bas.');
+  const reset=()=>{S.t=0;tl.set(0);};
+  api.slider({label:'Taban (a)',min:2,max:10,step:0.5,value:8,fmt:v=>tr(v),onInput:v=>{S.a=v;reset();render(false);}});
+  api.slider({label:'Sol çubuk (b)',min:1,max:10,step:0.5,value:5,fmt:v=>tr(v),onInput:v=>{S.b=v;reset();render(false);}});
+  api.slider({label:'Sağ çubuk (c)',min:1,max:10,step:0.5,value:4,fmt:v=>tr(v),onInput:v=>{S.c=v;reset();render(false);}});
+  const tl=api.slider({label:'Birleştir',min:0,max:1,step:0.001,value:0,play:true,dur:2500,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const {a,b,c}=S,k=ease(S.t);const Lp={x:320-a*Sc/2,y:yb},Rp={x:320+a*Sc/2,y:yb};
+    const ok=b+c>a&&a+c>b&&a+b>c,eq=!ok&&(Math.abs(b+c-a)<1e-9||Math.abs(a+c-b)<1e-9||Math.abs(a+b-c)<1e-9);
+    let tb,tc;if(ok){const x=(a*a+b*b-c*c)/(2*a),y=Math.sqrt(Math.max(0,b*b-x*x));tb=Math.atan2(y,x)*R2D;tc=180-Math.atan2(y,a-x)*R2D;}
+    else if(b>=a+c){tb=0;tc=0;}else if(c>=a+b){tb=180;tc=180;}else{tb=0;tc=180;}
+    const bb=lerp(115,tb,k),cc=lerp(65,tc,k);const Pb=polar(Lp,b*Sc,bb),Pc=polar(Rp,c*Sc,cc);let g=grid();
+    if(ok&&S.t>0.99)g+=poly([Lp,Rp,Pb],'fpoly cC soft');
+    g+=`<line x1="${f(Lp.x)}" y1="${yb}" x2="${f(Rp.x)}" y2="${yb}" style="stroke:var(--ink);stroke-width:9;stroke-linecap:round"/>`;
+    g+=`<line x1="${f(Lp.x)}" y1="${yb}" x2="${f(Pb.x)}" y2="${f(Pb.y)}" style="stroke:var(--hl2);stroke-width:9;stroke-linecap:round"/><line x1="${f(Rp.x)}" y1="${yb}" x2="${f(Pc.x)}" y2="${f(Pc.y)}" style="stroke:var(--hl4);stroke-width:9;stroke-linecap:round"/>`;
+    g+=`<circle class="kpt" cx="${f(Lp.x)}" cy="${yb}" r="6"/><circle class="kpt" cx="${f(Rp.x)}" cy="${yb}" r="6"/>`;
+    const gap=dist(Pb,Pc);if(S.t>0.99&&!ok&&gap>2)g+=`<line x1="${f(Pb.x)}" y1="${f(Pb.y-14)}" x2="${f(Pc.x)}" y2="${f(Pc.y-14)}" class="badline" style="stroke-dasharray:5 5"/>`+T({x:(Pb.x+Pc.x)/2,y:Pb.y-32},'yetişemiyor: '+tr(gap/Sc)+' br','sml');
+    g+=T({x:320,y:yb+26},'a = '+tr(a),'sml')+T(polar(Lp,b*Sc/2,bb),'b = '+tr(b),'val')+T(polar(Rp,c*Sc/2,cc),'c = '+tr(c),'val');api.draw(g);
+    const res=ok?['Üçgen olur','good','Her kenar öbür ikisinin toplamından küçük.']:eq?['Düz bir çizgi','','Toplam tam eşit: çubuklar düz yatıyor, alan sıfır. Bu bir üçgen değil.']:['Üçgen olmaz','warn','Kısa çubuklar yetişemiyor.'];
+    api.info(head('Sonuç',res[0],null,res[2],res[1])+checks([[b+c>a,`b + c > a → ${tr(b+c)} > ${tr(a)}`],[a+c>b,`a + c > b → ${tr(a+c)} > ${tr(b)}`],[a+b>c,`a + b > c → ${tr(a+b)} > ${tr(c)}`]])+`<p class="eqn">|b − c| < a < b + c<small>${tr(Math.abs(b-c))} < ${tr(a)} < ${tr(b+c)}</small></p>`);
+    if(user&&S.t>0.99){if(ok)api.done('olur');else if(eq)api.done('duz');else api.done('olmaz');}}
+  render(false);}},
+{name:'Büyük Açı, Büyük Kenar',note:'Üçgende en büyük açının karşısında en uzun kenar, en küçük açının karşısında en kısa kenar bulunur. Eşit açıların karşısındaki kenarlar da eşittir.',
+init(api){
+  const P={A:{x:200,y:100},B:{x:120,y:360},C:{x:520,y:360}};
+  api.hint('Köşeleri sürükle; aynı renkler karşılıklı açı ve kenar.');
+  function render(user){const st=triState(P);let g=grid();if(st.degen){api.draw(g+`<path class="tri" d="${pd([P.A,P.B,P.C])}"/>`+triHandles(P));api.info(degenInfo());return;}
+    const cols=['var(--hl)','var(--hl2)','var(--hl3)'];[[P.B,P.C],[P.C,P.A],[P.A,P.B]].forEach(([p,q],i)=>{g+=`<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" style="stroke:${cols[i]};stroke-width:12;stroke-linecap:round"/>`;});
+    g+=triDraw(P,st,{ticks:true})+triHandles(P);api.draw(g);
+    const nm=['A','B','C'],sn=['a','b','c'],sl=[st.sa,st.sb,st.sc];const ord=[0,1,2].sort((i,j)=>st.raw[j]-st.raw[i]);
+    const rel=(arr,f2)=>ord.map(i=>f2(i)).join(Math.abs(arr[ord[0]]-arr[ord[1]])<1e-9?' = ':' > ');
+    const aStr=ord.map(i=>`∠${nm[i]}`),sStr=ord.map(i=>sn[i]);const sym=(x,y)=>Math.abs(x-y)<0.6?' = ':' > ';
+    api.info(head('Sıralama',`${aStr[0]}${sym(st.raw[ord[0]],st.raw[ord[1]])}${aStr[1]}${sym(st.raw[ord[1]],st.raw[ord[2]])}${aStr[2]}`,null,'Karşı kenarlar da aynı sırada:')+`<p class="eqn">${sStr[0]}${sym(st.raw[ord[0]],st.raw[ord[1]])}${sStr[1]}${sym(st.raw[ord[1]],st.raw[ord[2]])}${sStr[2]}</p>`+
+      `<ul class="rows">${[0,1,2].map(i=>`<li><i class="sw ${['cA','cB','cC'][i]}"></i>∠${nm[i]} = ${st.ang[i]}° · karşısı ${sn[i]}<b>${tr(sl[i]/U)} br</b></li>`).join('')}</ul>`);
+    if(user){if(st.bySide==='İkizkenar')api.done('esit');if(st.byAng==='Dik açılı')api.done('dik');}}
+  api.drag((id,p)=>{if(triMove(P,id,p,true))render(true);});render(false);}}
+]});
+
+/* ---------- Eşlik ve benzerlik ---------- */
+reg({id:'b8',g:8,sub:'Eşlik ve Benzerlik',title:'İkiz mi, Kuzen mi?',
+icon:'<path class="if" d="M8 100H48L22 70Z"/><path class="if" d="M50 100H112L72 54Z" style="fill:var(--hl3)"/><path class="is" d="M34 34L86 34" style="stroke-dasharray:4 6;stroke-width:3"/>',
+tasks:[{k:'k2',text:'Benzerlik oranını 2 yap, alan oranına bak',lab:0},{k:'es',text:'Oranı 1 yaparak eş üçgen elde et',lab:0},{k:'kak',text:'KAK kuralıyla hedef üçgenin eşini kur',lab:1},{k:'aka',text:'AKA kuralıyla hedef üçgenin eşini kur',lab:1},{k:'kkk',text:'KKK kuralıyla hedef üçgenin eşini kur',lab:1},{k:'golge',text:'Gölgelerden ağacın boyunu bul',lab:2}],
+labs:[
+{name:'Benzerlik Büyüteci',note:'Benzer üçgenlerde açılar aynıdır, kenarlar aynı oranda büyür (k). Alan ise k² kat büyür: kenarlar 2 katına çıkınca alan 4 katına çıkar.',
+init(api){
+  const P={A:{x:120,y:240},B:{x:60,y:400},C:{x:220,y:400}},S={k:1.5};
+  api.hint('Soldaki üçgenin köşelerini sürükle, oranı değiştir.');
+  api.slider({label:'Benzerlik oranı (k)',min:0.5,max:2,step:0.25,value:1.5,fmt:v=>tr(v,2),onInput:v=>{S.k=v;render(true);}});
+  function render(user){const st=triState(P);let g=grid(20);if(st.degen){api.draw(g+`<path class="tri" d="${pd([P.A,P.B,P.C])}"/>`+triHandles(P));api.info(degenInfo());return;}
+    const mnx=Math.min(P.A.x,P.B.x,P.C.x),mxy=Math.max(P.A.y,P.B.y,P.C.y),k=S.k,o={x:330,y:410};
+    const Q={A:{x:o.x+k*(P.A.x-mnx),y:o.y-k*(mxy-P.A.y)},B:{x:o.x+k*(P.B.x-mnx),y:o.y-k*(mxy-P.B.y)},C:{x:o.x+k*(P.C.x-mnx),y:o.y-k*(mxy-P.C.y)}};
+    const s2=triState(Q);g+=triDraw(P,st,{unit:U})+triDraw(Q,s2,{unit:U,names:["A'","B'","C'"]})+triHandles(P);api.draw(g);
+    const es=Math.abs(k-1)<1e-9;
+    api.info(head(es?'Eş üçgenler':'Benzer üçgenler',es?'ABC ≅ A\'B\'C\'':'ABC ∼ A\'B\'C\'',`Oran k = ${tr(k,2)}`,'Açılar birebir aynı, kenarlar aynı oranda.',es?'good':'')+
+      `<table class="tb"><tr><th>Kenar</th><th>ABC</th><th>A'B'C'</th><th>Oran</th></tr>${[['AB',st.sc,s2.sc],['BC',st.sa,s2.sa],['CA',st.sb,s2.sb]].map(([n,x,y])=>`<tr><td>${n}</td><td>${tr(x/U,2)}</td><td>${tr(y/U,2)}</td><td>${tr(y/x,2)}</td></tr>`).join('')}</table>`+
+      stats(stat('Açılar','aynı',st.ang.join('°, ')+'°'),stat('Alan oranı',tr(k*k,4),'k² = '+tr(k,2)+'²')));
+    if(user){if(Math.abs(k-2)<1e-9)api.done('k2');if(es)api.done('es');}}
+  api.drag((id,p)=>{if(triMove(P,id,p,false,[40,220,280,400])){P[id]={x:snapv(P[id].x,20),y:snapv(P[id].y,20)};render(true);}});render(false);}},
+{name:'Eşlik Kuralı Kilidi',why:true,note:'Üç doğru parça bir üçgeni kilitler: KKK, KAK, AKA. Üç açı (AAA) yetmez; aynı açılarla farklı büyüklükte üçgenler çizilebilir. AAA yalnızca benzerlik verir.',
+init(api){
+  const A0={x:120,y:370},TG={c:6,A:50,b:5};const tC=polar(A0,TG.b*U,TG.A),tB={x:A0.x+TG.c*U,y:A0.y};const tst=triState({A:A0,B:tB,C:tC});
+  const S={rule:'KAK',c:4,A:80,b:3,B:60,a:5};
+  api.hint('Kaydırıcılarla kesikli hedef üçgenin eşini kur.');
+  api.seg([['KAK','KAK'],['AKA','AKA'],['KKK','KKK'],['AAA','AAA']],'KAK',v=>{S.rule=v;build();render(false);},{label:'Kural'});
+  const SL={c:['c kenarı (AB)',2,9,0.1,v=>tr(v)+' br'],b:['b kenarı (AC)',2,9,0.1,v=>tr(v)+' br'],a:['a kenarı (BC)',2,9,0.1,v=>tr(v)+' br'],A:['∠A',20,140,1,v=>Math.round(v)+'°'],B:['∠B',20,140,1,v=>Math.round(v)+'°']};
+  const parts={KAK:['b','A','c'],AKA:['A','c','B'],KKK:['a','b','c'],AAA:['A','B','c']};
+  function build(){api.below.innerHTML='';parts[S.rule].forEach(k=>{const d=SL[k];api.slider({label:d[0],min:d[1],max:d[2],step:d[3],value:S[k],fmt:d[4],onInput:v=>{S[k]=d[3]<1?Math.round(v*10)/10:Math.round(v);render(true);}});});}
+  function tri(){const B={x:A0.x+S.c*U,y:A0.y};let C=null;
+    if(S.rule==='KAK')C=polar(A0,S.b*U,S.A);
+    else if(S.rule==='AKA'||S.rule==='AAA'){if(S.A+S.B<179)C=intersect(A0,polar(A0,10,S.A),B,polar(B,10,180-S.B));}
+    else{const a=S.a,b=S.b,c=S.c;if(a+b>c&&a+c>b&&b+c>a){const x=(b*b+c*c-a*a)/(2*c);C={x:A0.x+x*U,y:A0.y-Math.sqrt(Math.max(0,b*b-x*x))*U};}}
+    return C?{A:A0,B,C}:null;}
+  function render(user){const P=tri();let g=grid()+`<path class="ghost" d="${pd([A0,tB,tC])}"/>`+T({x:tC.x,y:tC.y-18},'hedef','sml');
+    if(!P){api.draw(g);api.info(head(S.rule,'Üçgen kurulamıyor','Değerleri değiştir','Bu parçalarla üçgen oluşmuyor.','warn'));return;}
+    const st=triState(P);g+=triDraw(P,st,{ticks:false,colors:['cA','cB','cC']});api.draw(g);
+    const match=!st.degen&&Math.abs(st.sa-tst.sa)<0.15*U&&Math.abs(st.sb-tst.sb)<0.15*U&&Math.abs(st.sc-tst.sc)<0.15*U;
+    const angOnly=!st.degen&&S.rule==='AAA'&&Math.abs(st.raw[0]-tst.raw[0])<1.5&&Math.abs(st.raw[1]-tst.raw[1])<1.5;
+    const desc={KAK:'İki kenar ve aralarındaki açı.',AKA:'İki açı ve aralarındaki kenar.',KKK:'Üç kenar.',AAA:'Üç açı (c yalnızca boyutu belirler).'}[S.rule];
+    api.info(head(S.rule+' kuralı',match?'Eş! ≅':angOnly?'Benzer ama eş değil':'Henüz eş değil',match?'Hedefle çakıştı':null,angOnly&&!match?'Açılar aynı ama boyut farklı: AAA eşlik için yetmez.':desc,match?'good':'')+
+      `<table class="tb"><tr><th></th><th>Hedef</th><th>Senin</th></tr><tr><td>a</td><td>${tr(tst.sa/U,1)}</td><td>${tr(st.sa/U,1)}</td></tr><tr><td>b</td><td>${tr(tst.sb/U,1)}</td><td>${tr(st.sb/U,1)}</td></tr><tr><td>c</td><td>${tr(tst.sc/U,1)}</td><td>${tr(st.sc/U,1)}</td></tr><tr><td>∠A</td><td>${Math.round(tst.raw[0])}°</td><td>${Math.round(st.raw[0])}°</td></tr><tr><td>∠B</td><td>${Math.round(tst.raw[1])}°</td><td>${Math.round(st.raw[1])}°</td></tr></table>`);
+    if(user&&match){const m={KAK:'kak',AKA:'aka',KKK:'kkk'}[S.rule];if(m)api.done(m);}}
+  build();render(false);}},
+{name:'Gölgeyle Yükseklik',why:true,note:'Güneş ışınları paralel geldiği için çubuk ile gölgesinin oluşturduğu üçgen, ağaç ile gölgesinin oluşturduğu üçgene benzerdir. Oranlar eşitse ağacın boyu ölçmeden bulunur.',
+init(api){
+  const S={e:45,H:5},s0=1.5,M=30,gy=380,xs=70,xt=300,moved=new Set();
+  api.hint('Güneşin yüksekliğini ve ağacın boyunu değiştir.');
+  api.slider({label:'Güneş açısı',min:35,max:75,step:1,value:45,fmt:v=>Math.round(v)+'°',onInput:v=>{S.e=Math.round(v);moved.add(S.e);render(true);}});
+  api.slider({label:'Ağacın boyu',min:3,max:6,step:0.5,value:5,fmt:v=>tr(v)+' m',onInput:v=>{S.H=v;render(true);}});
+  function render(user){const t=Math.tan(S.e*D2R),g1=s0/t,g2=S.H/t;let g=grid(30);
+    g+=L({x:0,y:gy},{x:W,y:gy},'ray thin');
+    const sun=polar({x:560,y:gy},700,180-S.e);
+    g+=poly([{x:xs,y:gy},{x:xs,y:gy-s0*M},{x:xs+g1*M,y:gy}],'fpoly cA');g+=poly([{x:xt,y:gy},{x:xt,y:gy-S.H*M},{x:xt+g2*M,y:gy}],'fpoly cA soft');
+    g+=L({x:xs+g1*M,y:gy},polar({x:xs+g1*M,y:gy},140,180-S.e),'dash')+L({x:xt+g2*M,y:gy},polar({x:xt+g2*M,y:gy},S.H*M/Math.sin(S.e*D2R)+60,180-S.e),'dash');
+    g+=`<line x1="${xs}" y1="${gy}" x2="${xs}" y2="${f(gy-s0*M)}" style="stroke:var(--ink);stroke-width:6;stroke-linecap:round"/>`;
+    g+=`<line x1="${xt}" y1="${gy}" x2="${xt}" y2="${f(gy-S.H*M)}" style="stroke:#7a5230;stroke-width:9;stroke-linecap:round"/><circle cx="${xt}" cy="${f(gy-S.H*M)}" r="34" class="cC" style="stroke:var(--ink);stroke-width:2"/>`;
+    g+=`<line x1="${xs}" y1="${gy+6}" x2="${f(xs+g1*M)}" y2="${gy+6}" style="stroke:var(--pen);stroke-width:5"/><line x1="${xt}" y1="${gy+6}" x2="${f(xt+g2*M)}" y2="${gy+6}" style="stroke:var(--pen);stroke-width:5"/>`;
+    g+=T({x:xs+g1*M/2,y:gy+24},tr(g1,2)+' m','sml')+T({x:xt+g2*M/2,y:gy+24},tr(g2,2)+' m','sml')+T({x:xs-10,y:gy-s0*M/2},'1,5 m','sml','end')+T({x:xt-12,y:gy-S.H*M/2},'? m','val','end');
+    const sp=polar({x:610,y:gy},Math.min(560,(gy-30)/Math.sin(S.e*D2R)),180-S.e);
+    g+=`<circle cx="${f(clamp(sp.x,40,600))}" cy="${f(clamp(sp.y,30,300))}" r="22" style="fill:var(--hl);stroke:var(--ink);stroke-width:2"/>`;
+    api.draw(g);
+    api.info(head('Ağacın boyu',`${tr(s0,1)} × ${tr(g2,2)} ÷ ${tr(g1,2)} = ${tr(S.H,1)} m`,null,'Çubuk 1,5 m. Gölge uzunluklarını ölçüp orantı kuruyoruz.')+`<p class="eqn">ağaç ÷ çubuk = gölge₂ ÷ gölge₁<small>${tr(S.H/s0,2)} = ${tr(g2/g1,2)}</small></p>`+stats(stat('Çubuk gölgesi',tr(g1,2)+' m'),stat('Ağaç gölgesi',tr(g2,2)+' m')));
+    if(user&&moved.size>=2)api.done('golge');}
+  render(false);}}
+]});
+
+/* ---------- Pisagor ---------- */
+function sqOn(P,Q,R){const v=sub(Q,P);let n={x:-v.y,y:v.x};if(dot(n,sub(R,P))>0)n={x:-n.x,y:-n.y};return [P,Q,add(Q,n),add(P,n)];}
+function sqGrid(sq,step){const [P,Q,R2,Pn]=sq,l=dist(P,Q),k=Math.floor(l/step-1e-6);let s='';const u=mul(sub(Q,P),1/l),w=mul(sub(Pn,P),1/l);
+  for(let i=1;i<=k;i++){const a=add(P,mul(u,i*step)),b=add(Pn,mul(u,i*step)),c=add(P,mul(w,i*step)),d=add(Q,mul(w,i*step));s+=L(a,b,'tick')+L(c,d,'tick');}return s;}
+reg({id:'pt8',g:8,sub:'Pisagor Bağıntısı',title:'Karelerin Dansı',
+icon:'<rect class="if" x="10" y="50" width="30" height="30" style="fill:var(--hl2)"/><rect class="if" x="40" y="80" width="40" height="38"/><path class="if" d="M40 50L80 80L110 40L70 10Z" style="fill:var(--hl3)"/><path class="is" d="M40 50V80H80Z"/>',
+tasks:[{k:'uclu',text:'Kenarları tam sayı olan bir dik üçgen bul',lab:0,hint:'3-4-5'},{k:'genis',text:'Dik açıyı boz: geniş açıda c² ile a² + b²\'yi karşılaştır',lab:0},{k:'kanit',text:'Dört üçgenle kanıtı izle',lab:1},{k:'mesafe',text:'Arası tam 5 br olan, aynı çizgide olmayan iki nokta bul',lab:2}],
+labs:[
+{name:'Kenarlarda Kareler',note:'Dik üçgende dik kenarlar üzerine kurulan karelerin alanları toplamı, hipotenüs üzerindeki karenin alanına eşittir: a² + b² = c². Açı 90° değilse eşitlik bozulur.',
+init(api){
+  const Sc=32,C={x:200,y:268},S={a:3,b:4,g:90};
+  api.hint('Kırmızı noktalarla dik kenarları ayarla.');
+  api.slider({label:'C açısı',min:60,max:120,step:1,value:90,fmt:v=>Math.round(v)+'°',onInput:v=>{S.g=Math.round(v);render(true);}});
+  function render(user){const B={x:C.x+S.b*Sc,y:C.y},A=polar(C,S.a*Sc,S.g);const c=dist(A,B)/Sc;
+    let g=grid(Sc);const sa=sqOn(C,A,B),sb=sqOn(C,B,A),sc=sqOn(A,B,C);
+    g+=poly(sa,'fpoly cB soft')+sqGrid(sa,Sc)+poly(sb,'fpoly cA soft')+sqGrid(sb,Sc)+poly(sc,'fpoly cC soft')+sqGrid(sc,Sc);
+    const ctr=q=>({x:(q[0].x+q[2].x)/2,y:(q[0].y+q[2].y)/2});
+    g+=T(ctr(sa),`a² = ${S.a*S.a}`,'val')+T(ctr(sb),`b² = ${S.b*S.b}`,'val')+T(ctr(sc),`c² = ${tr(c*c,1)}`,'val');
+    g+=poly([A,B,C],'fpoly cP');if(S.g===90)g+=rightMark(C,0,14);
+    g+=T({x:C.x-14,y:C.y+16},'C','lbl')+T(polar(A,18,S.g+90),'A','lbl')+T({x:B.x+12,y:B.y+18},'B','lbl');
+    g+=hdl('a',A,'a kenarı')+hdl('b',B,'b kenarı');api.draw(g);
+    const s2=S.a*S.a+S.b*S.b,c2=c*c,cmp=Math.abs(s2-c2)<0.05?'=':c2>s2?'<':'>';const ci=Math.abs(c-Math.round(c))<1e-6;
+    api.info(head(S.g===90?'Dik üçgen':S.g>90?'Geniş açılı':'Dar açılı',`${S.a*S.a} + ${S.b*S.b} ${cmp} ${tr(c2,1)}`,S.g===90&&ci?'Pisagor üçlüsü!':null,S.g===90?`c = √${s2} ≈ ${tr(c,2)} br`:(c2>s2?'C açısı 90°\'den büyük: c² daha büyük.':'C açısı 90°\'den küçük: c² daha küçük.'),S.g===90&&ci?'good':'')+stats(stat('a² + b²',s2),stat('c²',tr(c2,2))));
+    if(user){if(S.g===90&&ci)api.done('uclu');if(S.g>90)api.done('genis');}}
+  api.drag((id,p)=>{if(id==='a'){const v=clamp(Math.round(dist(C,p)/Sc),1,4);if(v!==S.a){S.a=v;render(true);}}else{const v=clamp(Math.round((p.x-C.x)/Sc),1,4);if(v!==S.b){S.b=v;render(true);}}});
+  render(false);}},
+{name:'Dört Üçgenle Kanıt',why:true,note:'Aynı büyük karenin içine aynı dört üçgeni iki farklı şekilde yerleştiriyoruz. Boş kalan alan ilkinde c², ikincisinde a² + b². Üçgenler aynı olduğuna göre boşluklar da eşittir.',
+init(api){
+  const S={a:3,b:5,t:0},Sc=36;
+  api.hint('Oynat\'a bas: üçgenler yer değiştiriyor.');
+  api.slider({label:'a',min:1,max:5,step:1,value:3,fmt:v=>v,onInput:v=>{S.a=v;render(false);}});
+  api.slider({label:'b',min:1,max:5,step:1,value:5,fmt:v=>v,onInput:v=>{S.b=v;render(false);}});
+  api.slider({label:'Yer değiştir',min:0,max:1,step:0.001,value:0,play:true,dur:3000,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  function render(user){const a=S.a,b=S.b,s=a+b,k=ease(S.t),o={x:320-s*Sc/2,y:220-s*Sc/2};const P=(x,y)=>({x:o.x+x*Sc,y:o.y+y*Sc});
+    const tris=[[[0,0],[a,0],[0,b]],[[a,0],[s,0],[s,a]],[[s,a],[s,s],[b,s]],[[b,s],[0,s],[0,b]]],mv=[[0,a],[0,0],[-b,0],[a,-b]];
+    let g=grid(Sc);
+    if(k<0.02){g+=poly([P(a,0),P(s,a),P(b,s),P(0,b)],'fpoly cA');g+=T(P(s/2,s/2),'c²','lbl');}
+    if(k>0.98){g+=poly([P(0,0),P(a,0),P(a,a),P(0,a)],'fpoly cB')+poly([P(a,a),P(s,a),P(s,s),P(a,s)],'fpoly cD');g+=T(P(a/2,a/2),'a²','lbl')+T(P(a+b/2,a+b/2),'b²','lbl');}
+    tris.forEach((tq,i)=>{const d=mv[i];g+=poly(tq.map(([x,y])=>P(x+d[0]*k,y+d[1]*k)),'fpoly cC');});
+    g+=`<path class="outl" d="${pd([P(0,0),P(s,0),P(s,s),P(0,s)])}"/>`;
+    g+=T({x:o.x+a*Sc/2,y:o.y-14},'a','sml')+T({x:o.x+(a+b/2)*Sc,y:o.y-14},'b','sml');api.draw(g);
+    api.info(head('Büyük kare: (a + b)²',k>0.98?`a² + b² = ${a*a} + ${b*b}`:`c² = ${a*a+b*b}`,k>0.98?'Boşluklar: a² ve b²':'Boşluk: c²',`Büyük karenin alanı ${s*s}. Dört üçgenin toplamı 4 × ${a}·${b}/2 = ${2*a*b}. Geriye kalan ${s*s-2*a*b}.`)+`<p class="eqn">c² = a² + b² = ${a*a+b*b}</p>`);
+    if(user&&S.t>0.99)api.done('kanit');}
+  render(false);}},
+{name:'İki Nokta Arası',note:'Koordinat düzleminde iki nokta arasındaki uzaklık, yatay ve dikey farkların dik kenar olduğu bir dik üçgenin hipotenüsüdür: d = √(Δx² + Δy²).',
+init(api){
+  const S={P:{x:120,y:360},Q:{x:440,y:120}};
+  api.hint('İki noktayı sürükle.');
+  function render(user){const {P,Q}=S,dx=Math.abs(Q.x-P.x)/U,dy=Math.abs(Q.y-P.y)/U,d=Math.hypot(dx,dy),K={x:Q.x,y:P.y};let g=grid();
+    if(dx&&dy){const a1=dirDeg(K,P),b1=dirDeg(K,Q);g+=poly([P,K,Q],'fpoly cA soft')+rightMark(K,Math.round(norm360(b1-a1))===90?a1:b1,12);}
+    g+=L(P,Q,'ray pen')+L(P,K,'dash')+L(K,Q,'dash')+T({x:(P.x+K.x)/2,y:P.y+(P.y>Q.y?20:-20)},`Δx = ${dx}`,'sml')+T({x:K.x+(K.x>P.x?30:-30),y:(K.y+Q.y)/2},`Δy = ${dy}`,'sml');
+    g+=T(mid(P,Q),`d = ${tr(d,2)}`,'val')+hdl('P',P,'Birinci nokta')+hdl('Q',Q,'İkinci nokta');api.draw(g);
+    api.info(head('Uzaklık',`d = √(${dx}² + ${dy}²) = ${Number.isInteger(d)?d:'√'+(dx*dx+dy*dy)+' ≈ '+tr(d,2)}`,Number.isInteger(d)&&dx&&dy?'Tam sayı çıktı!':null,'Yeşil üçgenin dik kenarları, noktalar arasındaki yatay ve dikey uzaklıktır.')+stats(stat('Δx² + Δy²',dx*dx+dy*dy),stat('d',tr(d,2)+' br')));
+    if(user&&dx&&dy&&Math.abs(d-5)<1e-9)api.done('mesafe');}
+  api.drag((id,p)=>{const x=clamp(snapv(p.x),U,W-U),y=clamp(snapv(p.y),U,HT-U);const o=S[id==='P'?'Q':'P'];if(o.x===x&&o.y===y)return;if(S[id].x===x&&S[id].y===y)return;S[id]={x,y};render(true);});
+  render(false);}}
+]});
+
+/* ---------- Dönüşüm geometrisi ---------- */
+const O8={x:320,y:220},SH=[[0,0],[3,0],[2,2],[0,3]],NM=['A','B','C','D'];
+const toS=([x,y])=>({x:O8.x+x*U,y:O8.y-y*U});
+function axes(){let s=grid();s+=L({x:0,y:O8.y},{x:W,y:O8.y},'ax')+L({x:O8.x,y:0},{x:O8.x,y:HT},'ax');
+  for(let i=-7;i<=7;i++)if(i)s+=T({x:O8.x+i*U,y:O8.y+14},i,'axl');for(let j=-5;j<=5;j++)if(j)s+=T({x:O8.x-12,y:O8.y-j*U},j,'axl','end');
+  s+=T({x:W-12,y:O8.y-14},'x','ttl')+T({x:O8.x+14,y:14},'y','ttl');return s;}
+function shapeAt(ax,ay){return SH.map(([x,y])=>[x+ax,y+ay]);}
+function shapeSvg(pts,cls,names,ghost){const sp=pts.map(toS);let s=ghost?`<path class="ghost" d="${pd(sp)}"/>`:poly(sp,'fpoly '+cls);if(names)sp.forEach((p,i)=>{s+=`<circle class="vtx" cx="${p.x}" cy="${p.y}" r="4"/>`+T({x:p.x-12,y:p.y-14},names[i],'sml');});return s;}
+const ptTxt=([x,y])=>`(${x}, ${y})`;
+reg({id:'d8',g:8,sub:'Dönüşüm Geometrisi',title:'Ayna ve Kaydırak',
+icon:'<path class="is" d="M60 8V112" style="stroke-dasharray:6 6"/><path class="if" d="M50 30H20V90H30V40H50Z"/><path class="if" d="M70 30H100V90H90V40H70Z" style="fill:var(--hl2)"/>',
+tasks:[{k:'hedef',text:'Şekli kesikli hedefin üstüne ötele',lab:0},{k:'yatay',text:'Şekli yalnızca yatay olarak ötele',lab:0},{k:'x',text:'x eksenine göre yansıt',lab:1},{k:'y',text:'y eksenine göre yansıt',lab:1},{k:'eksen',text:'Bir köşeyi aynanın üstüne koy: görüntüsü nerede?',lab:1}],
+labs:[
+{name:'Öteleme',note:'Ötelemede şeklin her noktası aynı yöne, aynı miktarda kayar. Şekil dönmez, büyümez, ters yüz olmaz: (x, y) → (x + a, y + b).',
+init(api){
+  const S={ax:-6,ay:-3,dx:4,dy:2},TG=[2,1];
+  api.hint('Pembe şeklin A\' köşesini sürükle ya da kaydırıcıları kullan.');
+  const sx=api.slider({label:'Sağa / sola (a)',min:-10,max:10,step:1,value:4,fmt:v=>(v>0?'+':'')+v,onInput:v=>{S.dx=v;render(true);}});
+  const sy=api.slider({label:'Yukarı / aşağı (b)',min:-6,max:6,step:1,value:2,fmt:v=>(v>0?'+':'')+v,onInput:v=>{S.dy=v;render(true);}});
+  function render(user){const P=shapeAt(S.ax,S.ay),I=P.map(([x,y])=>[x+S.dx,y+S.dy]);let g=axes();
+    g+=shapeSvg(shapeAt(TG[0],TG[1]),'',null,true)+T(toS([TG[0]+1.5,TG[1]-0.5]),'hedef','sml');
+    g+=shapeSvg(P,'cA',NM)+shapeSvg(I,'cB',NM.map(n=>n+"'"));
+    P.forEach((p,i)=>{const a=toS(p),b=toS(I[i]);if(dist(a,b)>4){g+=L(a,b,'dash');g+=arrowHead(b,dirDeg(a,b),11);}});
+    g+=hdl('o',toS(P[0]),'Şekli taşı')+hdl('i',toS(I[0]),'Görüntüyü taşı');api.draw(g);sx.set(S.dx);sy.set(S.dy);
+    api.info(head('Öteleme',`(x, y) → (x ${S.dx<0?'−':'+'} ${Math.abs(S.dx)}, y ${S.dy<0?'−':'+'} ${Math.abs(S.dy)})`,null,'Bütün oklar aynı uzunlukta ve aynı yönde.')+
+      `<table class="tb"><tr><th>Nokta</th><th>Önce</th><th>Sonra</th></tr>${P.map((p,i)=>`<tr><td>${NM[i]}</td><td>${ptTxt(p)}</td><td>${ptTxt(I[i])}</td></tr>`).join('')}</table>`);
+    if(user){if(S.ax+S.dx===TG[0]&&S.ay+S.dy===TG[1])api.done('hedef');if(S.dy===0&&S.dx!==0)api.done('yatay');}}
+  api.drag((id,p)=>{const x=Math.round((p.x-O8.x)/U),y=Math.round((O8.y-p.y)/U);
+    if(id==='o'){const ax=clamp(x,-7,4),ay=clamp(y,-5,2);if(ax===S.ax&&ay===S.ay)return;S.ax=ax;S.ay=ay;}
+    else{const dx=clamp(x-S.ax,-10,10),dy=clamp(y-S.ay,-6,6);if(S.ax+dx>4||S.ax+dx<-7||S.ay+dy>2||S.ay+dy<-5)return;if(dx===S.dx&&dy===S.dy)return;S.dx=dx;S.dy=dy;}render(true);});
+  render(false);}},
+{name:'Yansıma',why:true,note:'Yansımada her nokta ile görüntüsü aynaya eşit uzaklıktadır ve onları birleştiren doğru aynaya diktir. Şekil ters yüz olur: köşelerin dönüş yönü değişir. Aynanın üstündeki nokta yerinde kalır.',
+init(api){
+  const S={ax:1,ay:1,m:'y'};
+  api.hint('Şekli A köşesinden sürükle, aynayı seç.');
+  api.seg([['y','y eksenine göre'],['x','x eksenine göre']],'y',v=>{S.m=v;render(true);},{label:'Ayna'});
+  function render(user){const P=shapeAt(S.ax,S.ay),I=P.map(([x,y])=>S.m==='x'?[x,-y]:[-x,y]);let g=axes();
+    g+=S.m==='x'?`<line x1="0" y1="${O8.y}" x2="${W}" y2="${O8.y}" style="stroke:var(--pen);stroke-width:5;opacity:.6"/>`:`<line x1="${O8.x}" y1="0" x2="${O8.x}" y2="${HT}" style="stroke:var(--pen);stroke-width:5;opacity:.6"/>`;
+    P.forEach((p,i)=>{const a=toS(p),b=toS(I[i]),m=mid(a,b);if(dist(a,b)>2){g+=L(a,b,'dash')+eqTicks(a,m)+eqTicks(m,b);}});
+    g+=shapeSvg(P,'cA',NM)+shapeSvg(I,'cB',NM.map(n=>n+"'"));
+    g+=hdl('o',toS(P[0]),'Şekli taşı');api.draw(g);
+    const on=P.some(([x,y])=>S.m==='x'?y===0:x===0);
+    api.info(head(S.m==='x'?'x eksenine göre yansıma':'y eksenine göre yansıma',S.m==='x'?'(x, y) → (x, −y)':'(x, y) → (−x, y)',on?'Aynadaki nokta yerinde kaldı':null,S.m==='x'?'x aynı kalır, y\'nin işareti değişir.':'y aynı kalır, x\'in işareti değişir.',on?'good':'')+
+      `<table class="tb"><tr><th>Nokta</th><th>Önce</th><th>Sonra</th></tr>${P.map((p,i)=>`<tr><td>${NM[i]}</td><td>${ptTxt(p)}</td><td>${ptTxt(I[i])}</td></tr>`).join('')}</table><p class="desc">A → B → C → D dönüş yönü görüntüde tersine döner.</p>`);
+    if(user){api.done(S.m);if(on)api.done('eksen');}}
+  api.drag((id,p)=>{const ax=clamp(Math.round((p.x-O8.x)/U),-7,4),ay=clamp(Math.round((O8.y-p.y)/U),-5,2);if(ax===S.ax&&ay===S.ay)return;S.ax=ax;S.ay=ay;render(true);});
+  render(false);}}
+]});
+
+/* ---------- Geometrik cisimler 8 ---------- */
+reg({id:'c8',g:8,sub:'Geometrik Cisimler',title:'Cisimler Galerisi',
+icon:'<path class="if" d="M8 100L34 30L60 100Z"/><ellipse class="if" cx="34" cy="100" rx="26" ry="8" style="fill:var(--hl2)"/><path class="if" d="M66 34V96A22 8 0 0 0 110 96V34Z" style="fill:var(--hl3)"/><ellipse class="if" cx="88" cy="34" rx="22" ry="8"/>',
+tasks:[{k:'dort',text:'Dört cismin hepsini incele',lab:0},{k:'ac',text:'Silindirin yan yüzünü aç',lab:1},{k:'uc',text:'Koniyle silindiri doldur',lab:2}],
+labs:[
+{name:'Cisim Seç',note:'Silindir ve prizmada hacim = taban alanı × yükseklik. Koni ve piramitte aynı tabana ve yüksekliğe sahip olan prizmanın üçte biri: hacim = taban alanı × yükseklik ÷ 3.',
+init(api){
+  const S={k:'pr',r:1.5,h:3},seen=new Set(),cam=cam3({s:62,cy:225,pitch:0.38});
+  api.hint('Cismi seç, boyutlarını değiştir, sürükleyerek döndür.');
+  api.seg([['pr','Kare prizma'],['py','Kare piramit'],['cy','Silindir'],['co','Koni']],'pr',v=>{S.k=v;render(true);},{label:'Cisim'});
+  api.slider({label:'Taban (a ya da r)',min:1,max:3,step:0.5,value:1.5,fmt:v=>tr(v)+' br',onInput:v=>{S.r=v;render(true);}});
+  api.slider({label:'Yükseklik (h)',min:1,max:5,step:0.5,value:3,fmt:v=>tr(v)+' br',onInput:v=>{S.h=v;render(true);}});
+  api.orbit(cam,()=>render(false));
+  function render(user){const {r,h}=S;const ps=3.14;let F,nm,V,SA,vf,sf,ex='';
+    if(S.k==='pr'){F=prismFaces(4,r*1.2,h,'cA','cB');const a=r*1.2;nm='Kare prizma';V=a*a*h;SA=2*a*a+4*a*h;vf=`a² · h = ${tr(a,1)}² · ${tr(h)}`;sf=`2a² + 4a·h`;}
+    else if(S.k==='py'){const a=r*1.4;F=pyrFaces(a,h);const l=Math.hypot(h,a/2);nm='Kare piramit';V=a*a*h/3;SA=a*a+2*a*l;vf=`a² · h ÷ 3 = ${tr(a,1)}² · ${tr(h)} ÷ 3`;sf=`a² + 4 · (a · ℓ ÷ 2)`;ex=`Yan yüz yüksekliği ℓ = ${tr(l,2)} br`;}
+    else if(S.k==='cy'){F=cylFaces(r,h);nm='Silindir';V=ps*r*r*h;SA=2*ps*r*r+2*ps*r*h;vf=`π · r² · h ≈ 3,14 · ${tr(r)}² · ${tr(h)}`;sf=`2πr² + 2πr·h`;}
+    else{F=coneFaces(r,h);const l=Math.hypot(h,r);nm='Koni';V=ps*r*r*h/3;SA=ps*r*r+ps*r*l;vf=`π · r² · h ÷ 3`;sf=`πr² + πr·ℓ`;ex=`Ana doğru ℓ = ${tr(l,2)} br`;}
+    api.draw(plain()+convex3(F,cam));seen.add(S.k);
+    api.info(head('Cisim',nm,null,ex||null)+stats(stat('Hacim',tr(V,2)+' br³',vf),stat('Yüzey alanı',tr(SA,2)+' br²',sf)));
+    if(user&&seen.size>=4)api.done('dort');}
+  render(false);}},
+{name:'Silindirin Açınımı',why:true,note:'Silindirin yan yüzü açılınca bir dikdörtgen olur. Bu dikdörtgenin bir kenarı yükseklik (h), öbür kenarı taban çemberinin uzunluğu (2πr). Yan alan = 2πr · h.',
+init(api){
+  const S={r:1,h:2.5,t:0},cam=cam3({s:34,cy:230,pitch:0.35,yaw:-0.45});
+  api.hint('Oynat\'a bas. Döndürmek için sürükle.');
+  api.slider({label:'Yarıçap',min:0.5,max:1.5,step:0.25,value:1,fmt:v=>tr(v,2)+' br',onInput:v=>{S.r=v;render(true);}});
+  api.slider({label:'Yükseklik',min:1,max:4,step:0.5,value:2.5,fmt:v=>tr(v)+' br',onInput:v=>{S.h=v;render(true);}});
+  api.slider({label:'Aç',min:0,max:1,step:0.001,value:0,play:true,dur:3500,fmt:v=>Math.round(v*100)+'%',onInput:v=>{S.t=v;render(true);}});
+  api.orbit(cam,()=>render(false));
+  function render(user){const {r,h}=S,k=ease(S.t),k1=Math.min(1,k/0.75),k2=clamp((k-0.7)/0.3,0,1),n=48;const F=[];
+    const R=k1>0.999?1e9:r/(1-k1);const pt=(u,y)=>{const ph=u/R;return v3(R*Math.sin(ph),y,(r-R)+R*Math.cos(ph));};
+    for(let i=0;i<n;i++){const u0=2*PI*r*i/n,u1=2*PI*r*(i+1)/n;F.push({p:[pt(u0,-h/2),pt(u1,-h/2),pt(u1,h/2),pt(u0,h/2)],k:'cA sm'});}
+    const ps=-k2*PI/2;[[h/2,1],[-h/2,-1]].forEach(([y0,sg])=>{const pts=[];for(let i=0;i<n;i++){const th=2*PI*i/n,dz=r*Math.sin(th)-r,dx=r*Math.cos(th);const ang=sg*ps;pts.push(v3(dx,y0-dz*Math.sin(-ang)*1,r+dz*Math.cos(ang)));}F.push({p:pts,k:'cB'});});
+    const c2=Object.assign({},cam,{yaw:lerp(cam.yaw,0,k*k),pitch:lerp(cam.pitch,0.05,k*k),cx:320-PI*r*k*cam.s});
+    let g=plain()+painter3(F,c2);
+    if(k>0.98){const a=P3(v3(0,-h/2,r),c2),b=P3(v3(2*PI*r,-h/2,r),c2);g+=L({x:a.x,y:a.y+18},{x:b.x,y:b.y+18},'dim')+T({x:(a.x+b.x)/2,y:a.y+34},'2πr ≈ '+tr(2*PI*r,2)+' br','dimt');}
+    api.draw(g);
+    api.info(head('Yan yüz',k>0.98?'Bir dikdörtgen!':'Açılıyor…',null,'Yan yüzü bir kâğıt gibi kesip düzleştiriyoruz.')+stats(stat('Genişlik',tr(2*PI*r,2)+' br','2πr'),stat('Yükseklik',tr(h)+' br','h'))+`<p class="eqn">Yan alan = 2πr · h ≈ ${tr(2*3.14*r*h,2)} br²<small>Tüm yüzey = 2πr² + 2πr·h ≈ ${tr(2*3.14*r*r+2*3.14*r*h,2)} br²</small></p>`);
+    if(user&&S.t>0.99)api.done('ac');}
+  render(false);}},
+{name:'Koni ile Silindiri Doldur',why:true,note:'Aynı taban ve yükseklikteki koninin hacmi, silindirin tam üçte biridir. Koniyi üç kez doldurup boşaltınca silindir dolar. Piramit ile prizma arasında da aynı ilişki vardır.',
+init(api){
+  const S={p:0},r=70,h=210,yb=390,cx=150,sx=440;
+  api.hint('Oynat\'a bas: koni dolup silindire boşaltılıyor.');
+  api.slider({label:'Dökülen koni',min:0,max:3,step:0.001,value:0,play:true,dur:7000,fmt:v=>tr(Math.min(3,Math.floor(v+1e-9)),0)+' koni',onInput:v=>{S.p=v;render(true);}});
+  function render(user){const p=S.p,kk=Math.min(2,Math.floor(p)),fr=p>=3?1:p-kk;const fill=fr<0.4?fr/0.4:1-(fr-0.4)/0.6,pour=clamp((fr-0.4)/0.6,0,1);
+    const vc=p>=3?0:fill,lvl=p>=3?h:(kk+pour)/3*h;let g=grid();
+    const top=yb-h;g+=`<path class="outl" d="M${cx-r} ${top}L${cx} ${yb}L${cx+r} ${top}"/><ellipse cx="${cx}" cy="${top}" rx="${r}" ry="12" style="fill:none;stroke:var(--ink);stroke-width:3"/>`;
+    if(vc>0.001){const hw=h*Math.cbrt(vc),rw=r*Math.cbrt(vc);g+=`<path class="water" d="M${f(cx-rw)} ${f(yb-hw)}L${cx} ${yb}L${f(cx+rw)} ${f(yb-hw)}Z"/><ellipse class="water" cx="${cx}" cy="${f(yb-hw)}" rx="${f(rw)}" ry="${f(12*rw/r)}"/>`;}
+    if(lvl>0.5)g+=`<rect class="water" x="${sx-r}" y="${f(yb-lvl)}" width="${2*r}" height="${f(lvl)}"/><ellipse class="water" cx="${sx}" cy="${f(yb-lvl)}" rx="${r}" ry="12"/><ellipse class="water" cx="${sx}" cy="${yb}" rx="${r}" ry="12"/>`;
+    g+=`<path class="outl" d="M${sx-r} ${top}V${yb}M${sx+r} ${top}V${yb}"/><ellipse cx="${sx}" cy="${top}" rx="${r}" ry="12" style="fill:none;stroke:var(--ink);stroke-width:3"/><path d="M${sx-r} ${yb}A${r} 12 0 0 0 ${sx+r} ${yb}" style="fill:none;stroke:var(--ink);stroke-width:3"/>`;
+    for(let j=1;j<=3;j++){const y=yb-h*j/3;g+=L({x:sx+r,y},{x:sx+r+14,y},'ray thin')+T({x:sx+r+22,y},j+'/3','sml','start');}
+    if(fr>0.4&&fr<1&&p<3)g+=`<path class="dash" d="M${cx+r-10} ${top-10}Q${(cx+sx)/2} ${top-110} ${sx-20} ${top-6}"/>`+arrowHead({x:sx-20,y:top-6},-40,12);
+    g+=T({x:cx,y:yb+30},'Koni','ttl')+T({x:sx,y:yb+30},'Silindir','ttl');api.draw(g);
+    const n=p>=3?3:kk+(pour>0.999?1:0);
+    api.info(head('Aynı taban, aynı yükseklik',p>=3?'3 koni = 1 silindir':`${n} koni döküldü`,p>=3?'Silindir doldu':null,'Silindirin dolu kısmını sağdaki çizgilerle karşılaştır.',p>=3?'good':'')+`<p class="eqn">V koni = π·r²·h ÷ 3<small>V silindir = π·r²·h</small></p>`);
+    if(user&&p>=2.999)api.done('uc');}
+  render(false);}}
+]});
+
+boot();
+
+})();
+</script>
+
+</body>
+</html>
