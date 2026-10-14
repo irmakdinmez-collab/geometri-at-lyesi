@@ -92,7 +92,7 @@ const checks=items=>`<ul class="checks">${items.map(([ok,t])=>`<li class="${ok?'
 const Topics=[];const reg=t=>Topics.push(t);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let GEN=0,cur=null,justK=null,toastT;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400);}
+function toast(msg,ms){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms||2400);}
 const doneSet=id=>new Set(store.get('gka2-'+id)||[]);
 
 function makeApi(t,li){
@@ -192,9 +192,27 @@ function boot(){
   $('#home-btn').onclick=showHome;$('#back').onclick=showHome;
   const bm=$('#boardMode');bm.checked=!!store.get('gka-board');document.body.classList.toggle('board',bm.checked);
   bm.onchange=()=>{document.body.classList.toggle('board',bm.checked);store.set('gka-board',bm.checked);};
+  pwa();
   const h=(location.hash||'').slice(1);
   if(h.indexOf('t-')===0){const [id,li]=h.slice(2).split('.');openTopic(id,+li||0);}
   else{const m=/^g([5-8])$/.exec(h);if(m)grade=+m[1];showHome();}
+}
+
+/* ================= yüklenebilir uygulama (PWA) ================= */
+function pwa(){
+  if(!document.querySelector('link[rel="manifest"]'))return;
+  const btn=$('#installBtn');let deferred=null;
+  const standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;btn.hidden=false;});
+  window.addEventListener('appinstalled',()=>{btn.hidden=true;deferred=null;toast('Uygulama yüklendi. Ana ekrandaki simgeden açabilirsin.',4000);});
+  if(ios&&!standalone)btn.hidden=false;
+  btn.onclick=async()=>{
+    if(deferred){deferred.prompt();try{const r=await deferred.userChoice;if(r.outcome==='accepted')btn.hidden=true;}catch(e){}deferred=null;}
+    else if(ios)toast('Safari\'de Paylaş düğmesine dokun, sonra "Ana Ekrana Ekle"yi seç.',6000);
+    else toast('Tarayıcı menüsünden "Uygulamayı yükle" ya da "Ana ekrana ekle"yi seç.',5000);};
+  if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});}
 }
 
 /* ================= ortak etkinlik parçaları ================= */

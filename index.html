@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>body{margin:0}</style>
+<meta name="description" content="5–8. sınıf geometri konuları için etkileşimli keşif atölyesi.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1c3360">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Geometri">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 <title>Geometri Keşif Atölyesi</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,6 +57,10 @@ button{font-family:inherit}
 .mark svg{width:34px;height:34px}
 .brand h1{font-family:var(--display);font-weight:800;font-size:clamp(23px,3.4vw,34px);line-height:1.02;margin:0;text-wrap:balance}
 .brand p{margin:3px 0 0;color:var(--ink-soft);font-weight:600}
+.topr{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.inst{display:inline-flex;align-items:center;gap:8px;font:800 15px var(--body);color:#fff;background:var(--pen);border:none;padding:9px 16px;border-radius:999px;cursor:pointer}
+.inst svg{width:16px;height:16px}
+.inst[hidden]{display:none}
 .switch{display:inline-flex;align-items:center;gap:10px;font-weight:800;cursor:pointer;background:var(--sheet);border:1px solid var(--line);padding:8px 14px;border-radius:999px;user-select:none}
 .switch input{appearance:none;width:38px;height:22px;border-radius:999px;background:var(--grid2);position:relative;cursor:pointer;margin:0;transition:background .2s}
 .switch input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--sheet);transition:transform .2s}
@@ -260,7 +273,7 @@ table.tb th{font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter
       </span>
       <span><h1>Geometri Keşif Atölyesi</h1><p>Sürükle, ölç, kuralı kendin bul.</p></span>
     </button>
-    <label class="switch"><input type="checkbox" id="boardMode"> Tahta modu</label>
+    <div class="topr"><button class="inst" id="installBtn" type="button" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8M4.5 6.5L8 10l3.5-3.5M3 13h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Uygulamayı yükle</button><label class="switch"><input type="checkbox" id="boardMode"> Tahta modu</label></div>
   </header>
 
   <main id="home">
@@ -392,7 +405,7 @@ const checks=items=>`<ul class="checks">${items.map(([ok,t])=>`<li class="${ok?'
 const Topics=[];const reg=t=>Topics.push(t);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let GEN=0,cur=null,justK=null,toastT;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2400);}
+function toast(msg,ms){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms||2400);}
 const doneSet=id=>new Set(store.get('gka2-'+id)||[]);
 
 function makeApi(t,li){
@@ -492,9 +505,27 @@ function boot(){
   $('#home-btn').onclick=showHome;$('#back').onclick=showHome;
   const bm=$('#boardMode');bm.checked=!!store.get('gka-board');document.body.classList.toggle('board',bm.checked);
   bm.onchange=()=>{document.body.classList.toggle('board',bm.checked);store.set('gka-board',bm.checked);};
+  pwa();
   const h=(location.hash||'').slice(1);
   if(h.indexOf('t-')===0){const [id,li]=h.slice(2).split('.');openTopic(id,+li||0);}
   else{const m=/^g([5-8])$/.exec(h);if(m)grade=+m[1];showHome();}
+}
+
+/* ================= yüklenebilir uygulama (PWA) ================= */
+function pwa(){
+  if(!document.querySelector('link[rel="manifest"]'))return;
+  const btn=$('#installBtn');let deferred=null;
+  const standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;btn.hidden=false;});
+  window.addEventListener('appinstalled',()=>{btn.hidden=true;deferred=null;toast('Uygulama yüklendi. Ana ekrandaki simgeden açabilirsin.',4000);});
+  if(ios&&!standalone)btn.hidden=false;
+  btn.onclick=async()=>{
+    if(deferred){deferred.prompt();try{const r=await deferred.userChoice;if(r.outcome==='accepted')btn.hidden=true;}catch(e){}deferred=null;}
+    else if(ios)toast('Safari\'de Paylaş düğmesine dokun, sonra "Ana Ekrana Ekle"yi seç.',6000);
+    else toast('Tarayıcı menüsünden "Uygulamayı yükle" ya da "Ana ekrana ekle"yi seç.',5000);};
+  if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});}
 }
 
 /* ================= ortak etkinlik parçaları ================= */
